@@ -550,6 +550,86 @@
       cursor: pointer;
     }
 
+    /* BUSCADOR AUTOCOMPLETABLE DE SIGLAS */
+    .combo-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .combo-input-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .combo-input-row input {
+      padding-right: 54px !important;
+    }
+    .combo-clear-btn {
+      position: absolute;
+      right: 28px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 5px;
+      display: none;
+    }
+    .combo-clear-btn:hover {
+      color: #334155;
+    }
+    .combo-arrow-btn {
+      position: absolute;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 0.78rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .combo-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 230px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+      z-index: 90;
+      display: none;
+    }
+    .combo-dropdown.open {
+      display: block;
+    }
+    .combo-item {
+      padding: 8px 12px;
+      font-size: 0.83rem;
+      color: #1e293b;
+      cursor: pointer;
+      border-bottom: 1px solid #f1f5f9;
+      line-height: 1.3;
+    }
+    .combo-item:last-child {
+      border-bottom: none;
+    }
+    .combo-item:hover,
+    .combo-item.active {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .combo-item b {
+      color: #0d4b84;
+    }
+    .combo-empty {
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #64748b;
+      text-align: center;
+    }
+
     /* DATAGRID CONTAINER */
     .grid-card {
       background: var(--white);
@@ -968,9 +1048,8 @@
             </div>
             <div class="outlined-field">
               <label>Siglas</label>
-              <select id="f_af_siglas" onchange="filtrarAfiliados()">
-                <option value="">Todas</option>
-              </select>
+              <input type="text" id="f_af_siglas" list="datalist_siglas_filtro" placeholder="Todas (escribir...)" oninput="filtrarAfiliados()" />
+              <datalist id="datalist_siglas_filtro"></datalist>
             </div>
             <div class="outlined-field">
               <label>Tipo de Gestión</label>
@@ -1212,12 +1291,25 @@
             </select>
           </div>
 
-          <!-- DESPLEGABLE SIGLAS (VINCULADO A TABLA obras_sociales) -->
+          <!-- BUSCADOR AUTOCOMPLETABLE SIGLAS (VINCULADO A TABLA obras_sociales) -->
           <div class="form-field">
             <label>SIGLAS (OBRA SOCIAL)</label>
-            <select id="af_siglas">
-              <option value="">-- Seleccionar Siglas --</option>
-            </select>
+            <div class="combo-wrapper" id="siglasComboWrapper">
+              <div class="combo-input-row">
+                <input
+                  type="text"
+                  id="af_siglas_busqueda"
+                  autocomplete="off"
+                  placeholder="Escribe sigla o nombre (ej: OSECAC, Comercio...)"
+                  onfocus="abrirComboSiglas()"
+                  oninput="filtrarComboSiglas()"
+                />
+                <button type="button" class="combo-clear-btn" id="btnLimpiarSigla" onclick="limpiarSiglaSeleccionada()" title="Limpiar">×</button>
+                <button type="button" class="combo-arrow-btn" onclick="toggleComboSiglas()" title="Ver lista">▼</button>
+              </div>
+              <input type="hidden" id="af_siglas" value="" />
+              <div class="combo-dropdown" id="siglasComboDropdown"></div>
+            </div>
           </div>
 
           <!-- DESPLEGABLE LOCALIDAD -->
@@ -1323,20 +1415,20 @@
         'JUBILADO'
       ],
       SIGLAS_FALLBACK: [
-        'OSSACRA',
-        'OSSIMRA',
-        'OSPACP',
-        'OSECAC',
-        'OSPS MERCEDES',
-        'OSPSIP',
-        'ASSPE',
-        'OSPLAD',
-        'OSPM',
-        'OSPCN',
-        'ARPSALUD',
-        'ANDAR',
-        'AMPES',
-        'SANCOR'
+        { sigla: 'OSSACRA', nombre: 'Obra Social de la Asociación Civil Prosindicato de Amas de Casa' },
+        { sigla: 'OSSIMRA', nombre: 'Obra Social del Personal de Supervisores de la Industria Metalmecánica' },
+        { sigla: 'OSPACP', nombre: 'Obra Social del Personal Auxiliar de Casas Particulares' },
+        { sigla: 'OSECAC', nombre: 'Obra Social de los Empleados de Comercio y Actividades Civiles' },
+        { sigla: 'OSPS MERCEDES', nombre: 'Obra Social del Personal de Seguridad' },
+        { sigla: 'OSPSIP', nombre: 'Obra Social del Personal de Seguridad Comercial, Industrial e Investigaciones Privadas' },
+        { sigla: 'ASSPE', nombre: 'Asociación Mutual' },
+        { sigla: 'OSPLAD', nombre: 'Obra Social para la Actividad Docente' },
+        { sigla: 'OSPM', nombre: 'Obra Social del Personal Marítimo' },
+        { sigla: 'OSPCN', nombre: 'Obra Social del Personal Civil de la Nación' },
+        { sigla: 'ARPSALUD', nombre: 'ARP Salud' },
+        { sigla: 'ANDAR', nombre: 'Obra Social de Viajantes Vendedores de la República Argentina' },
+        { sigla: 'AMPES', nombre: 'Asociación Mutual del Personal de Participantes de Economía Solidaria' },
+        { sigla: 'SANCOR', nombre: 'Asociación Mutual Sancor Salud' }
       ],
       LOCALIDAD: [
         'CAPITAL',
@@ -1403,6 +1495,13 @@
     async function iniciarApp() {
       actualizarDesplegables();
 
+      document.addEventListener('click', function(ev) {
+        const wrapper = document.getElementById('siglasComboWrapper');
+        if (wrapper && !wrapper.contains(ev.target)) {
+          cerrarComboSiglas();
+        }
+      });
+
       try {
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
           mostrarMsgLogin('No se pudo conectar con el servidor. Verifica tu conexión a internet.', 'error');
@@ -1436,6 +1535,110 @@
       iniciarApp();
     }
 
+    /* ================= BUSCADOR AUTOCOMPLETABLE DE SIGLAS ================= */
+    function obtenerCatalogoOS() {
+      return listaObrasSociales.length > 0 ? listaObrasSociales : OPCIONES_BASE.SIGLAS_FALLBACK;
+    }
+
+    function abrirComboSiglas() {
+      renderizarOpcionesCombo(document.getElementById('af_siglas_busqueda').value);
+      document.getElementById('siglasComboDropdown').classList.add('open');
+    }
+
+    function cerrarComboSiglas() {
+      const dd = document.getElementById('siglasComboDropdown');
+      if (dd) dd.classList.remove('open');
+    }
+
+    function toggleComboSiglas() {
+      const dd = document.getElementById('siglasComboDropdown');
+      if (dd.classList.contains('open')) {
+        cerrarComboSiglas();
+      } else {
+        abrirComboSiglas();
+        document.getElementById('af_siglas_busqueda').focus();
+      }
+    }
+
+    function filtrarComboSiglas() {
+      const texto = document.getElementById('af_siglas_busqueda').value;
+      document.getElementById('btnLimpiarSigla').style.display = texto ? 'block' : 'none';
+
+      // Si el usuario escribió exactamente una sigla válida, la asignamos automáticamente
+      const catalogo = obtenerCatalogoOS();
+      const coincidenciaExacta = catalogo.find(function(item) {
+        return (item.sigla || '').trim().toUpperCase() === texto.trim().toUpperCase();
+      });
+      document.getElementById('af_siglas').value = coincidenciaExacta
+        ? coincidenciaExacta.sigla.trim().toUpperCase()
+        : '';
+
+      renderizarOpcionesCombo(texto);
+      document.getElementById('siglasComboDropdown').classList.add('open');
+    }
+
+    function renderizarOpcionesCombo(filtroTexto) {
+      const dd = document.getElementById('siglasComboDropdown');
+      const q = (filtroTexto || '').trim().toLowerCase();
+      const catalogo = obtenerCatalogoOS();
+
+      const coincidencias = catalogo.filter(function(item) {
+        const sig = (item.sigla || '').toLowerCase();
+        const nom = (item.nombre || '').toLowerCase();
+        return !q || sig.indexOf(q) !== -1 || nom.indexOf(q) !== -1;
+      });
+
+      if (coincidencias.length === 0) {
+        dd.innerHTML = '<div class="combo-empty">No se encontraron obras sociales con "' + filtroTexto + '"</div>';
+        return;
+      }
+
+      dd.innerHTML = coincidencias.slice(0, 120).map(function(item) {
+        const sigClean = (item.sigla || '').trim().toUpperCase();
+        const nomClean = (item.nombre || '').trim();
+        const sigEsc = sigClean.replace(/'/g, "\\'");
+        const nomEsc = nomClean.replace(/'/g, "\\'");
+        return '<div class="combo-item" onclick="seleccionarSiglaCombo(\'' + sigEsc + '\', \'' + nomEsc + '\')">' +
+          '<b>' + sigClean + '</b>' + (nomClean ? ' - ' + nomClean : '') +
+        '</div>';
+      }).join('');
+    }
+
+    function seleccionarSiglaCombo(sigla, nombre) {
+      document.getElementById('af_siglas').value = sigla;
+      document.getElementById('af_siglas_busqueda').value = nombre ? (sigla + ' - ' + nombre) : sigla;
+      document.getElementById('btnLimpiarSigla').style.display = 'block';
+      cerrarComboSiglas();
+    }
+
+    function limpiarSiglaSeleccionada() {
+      document.getElementById('af_siglas').value = '';
+      document.getElementById('af_siglas_busqueda').value = '';
+      document.getElementById('btnLimpiarSigla').style.display = 'none';
+      abrirComboSiglas();
+      document.getElementById('af_siglas_busqueda').focus();
+    }
+
+    function setValorSiglaFormulario(sigla) {
+      if (!sigla) {
+        document.getElementById('af_siglas').value = '';
+        document.getElementById('af_siglas_busqueda').value = '';
+        document.getElementById('btnLimpiarSigla').style.display = 'none';
+        return;
+      }
+      const sigUpper = sigla.trim().toUpperCase();
+      const catalogo = obtenerCatalogoOS();
+      const encontrada = catalogo.find(function(o) {
+        return (o.sigla || '').trim().toUpperCase() === sigUpper;
+      });
+      document.getElementById('af_siglas').value = sigUpper;
+      document.getElementById('af_siglas_busqueda').value = (encontrada && encontrada.nombre)
+        ? (sigUpper + ' - ' + encontrada.nombre)
+        : sigUpper;
+      document.getElementById('btnLimpiarSigla').style.display = 'block';
+    }
+
+    /* ================= AUTENTICACIÓN ================= */
     function togglePassword(inputId) {
       const inp = document.getElementById(inputId);
       inp.type = inp.type === 'password' ? 'text' : 'password';
@@ -1706,41 +1909,15 @@
       poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      // Desplegable SIGLAS desde la tabla obras_sociales de Supabase
-      const selSiglasForm = document.getElementById('af_siglas');
-      if (selSiglasForm) {
-        const previo = selSiglasForm.value;
-        selSiglasForm.innerHTML = '<option value="">-- Seleccionar Siglas --</option>';
-
-        if (listaObrasSociales.length > 0) {
-          listaObrasSociales.forEach(function(os) {
-            const siglaClean = (os.sigla || '').trim().toUpperCase();
-            if (!siglaClean) return;
-            const opt = document.createElement('option');
-            opt.value = siglaClean;
-            const nombreCorto = (os.nombre || '').slice(0, 50);
-            opt.textContent = nombreCorto ? (siglaClean + ' - ' + nombreCorto) : siglaClean;
-            selSiglasForm.appendChild(opt);
-          });
-        } else {
-          OPCIONES_BASE.SIGLAS_FALLBACK.forEach(function(sig) {
-            const opt = document.createElement('option');
-            opt.value = sig;
-            opt.textContent = sig;
-            selSiglasForm.appendChild(opt);
-          });
-        }
-
-        if (previo && Array.from(selSiglasForm.options).some(function(o) { return o.value === previo; })) {
-          selSiglasForm.value = previo;
-        }
+      // Datalist para el filtro superior de Siglas
+      const dlFiltro = document.getElementById('datalist_siglas_filtro');
+      if (dlFiltro) {
+        const catalogo = obtenerCatalogoOS();
+        dlFiltro.innerHTML = catalogo.map(function(o) {
+          const s = (o.sigla || '').trim().toUpperCase();
+          return s ? '<option value="' + s + '">' + (o.nombre || '') + '</option>' : '';
+        }).join('');
       }
-
-      const siglasUnicas = listaObrasSociales.length > 0
-        ? Array.from(new Set(listaObrasSociales.map(function(o) { return (o.sigla || '').trim().toUpperCase(); }).filter(Boolean)))
-        : OPCIONES_BASE.SIGLAS_FALLBACK;
-
-      poblarSelect('f_af_siglas', siglasUnicas, 'Todas');
 
       const selCuil = document.getElementById('tu_cuil');
       if (selCuil) {
@@ -1781,8 +1958,6 @@
           mostrarAlerta('Aviso obras_sociales: ' + resOs.error.message, 'error');
         } else if (resOs.data && resOs.data.length > 0) {
           listaObrasSociales = resOs.data;
-        } else {
-          mostrarAlerta('La tabla obras_sociales devolvió 0 filas. Verifica la política SELECT en Supabase.', 'error');
         }
 
         setEstadoConexion('ok', 'Conectado (' + listaObrasSociales.length + ' OS)');
@@ -1861,7 +2036,7 @@
 
     function filtrarAfiliados() {
       const fReg = document.getElementById('f_af_regimen').value.toLowerCase();
-      const fSig = document.getElementById('f_af_siglas').value.toLowerCase();
+      const fSig = document.getElementById('f_af_siglas').value.toLowerCase().trim();
       const fGes = document.getElementById('f_af_gestion').value.toLowerCase();
       const fCuil = document.getElementById('f_af_cuil').value.toLowerCase().trim();
       const fNom = document.getElementById('f_af_nombre').value.toLowerCase().trim();
@@ -1873,7 +2048,7 @@
 
       const filtrados = listaAfiliados.filter(function(af) {
         return (!fReg || (af.REGIMEN || '').toLowerCase() === fReg) &&
-               (!fSig || (af.SIGLAS || '').toLowerCase() === fSig) &&
+               (!fSig || (af.SIGLAS || '').toLowerCase().indexOf(fSig) !== -1) &&
                (!fGes || (af['TIPO DE GESTION'] || '').toLowerCase() === fGes) &&
                (!fCuil || (af.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
                (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
@@ -1948,11 +2123,13 @@
       document.getElementById('drawerAfiliado').classList.remove('open');
       document.getElementById('drawerTurno').classList.remove('open');
       document.getElementById('drawerClave').classList.remove('open');
+      cerrarComboSiglas();
     }
 
     function abrirDrawerAfiliado() {
       if (!usuarioActual) return;
       document.getElementById('formAfiliado').reset();
+      setValorSiglaFormulario('');
       document.getElementById('af_modo_edicion').value = 'false';
       document.getElementById('af_cuil').readOnly = false;
       document.getElementById('tituloDrawerAfiliado').textContent = 'Nuevo Dato';
@@ -1989,7 +2166,7 @@
       document.getElementById('af_correo').value = af['CORREO ELECTRONICO'] || '';
 
       setSelectValor('af_regimen', af.REGIMEN);
-      setSelectValor('af_siglas', af.SIGLAS);
+      setValorSiglaFormulario(af.SIGLAS);
       setSelectValor('af_localidad', af.LOCALIDAD);
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
     }
@@ -2020,6 +2197,15 @@
       e.preventDefault();
       if (!supabaseClient || !usuarioActual) return;
 
+      const textoBusquedaSigla = document.getElementById('af_siglas_busqueda').value.trim();
+      const sig = document.getElementById('af_siglas').value.trim();
+
+      if (textoBusquedaSigla && !sig) {
+        mostrarAlerta('Selecciona una obra social válida de la lista desplegable.', 'error');
+        abrirComboSiglas();
+        return;
+      }
+
       const esEdicion = document.getElementById('af_modo_edicion').value === 'true';
       const cuil = document.getElementById('af_cuil').value.trim();
 
@@ -2031,7 +2217,6 @@
       const cel = document.getElementById('af_celular').value.trim();
       const cor = document.getElementById('af_correo').value.trim();
       const reg = document.getElementById('af_regimen').value.trim();
-      const sig = document.getElementById('af_siglas').value.trim();
       const loc = document.getElementById('af_localidad').value.trim();
       const ges = document.getElementById('af_gestion').value.trim();
 
