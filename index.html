@@ -1099,7 +1099,6 @@
                 <thead>
                   <tr>
                     <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
-                    <th>Turno</th>
                     <th>Editar</th>
                     <th>Cuil - Titular</th>
                     <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
@@ -1112,7 +1111,7 @@
                   </tr>
                 </thead>
                 <tbody id="tbodyAfiliados">
-                  <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
+                  <tr><td colspan="10" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1580,7 +1579,6 @@
       const texto = document.getElementById('af_siglas_busqueda').value;
       document.getElementById('btnLimpiarSigla').style.display = texto ? 'block' : 'none';
 
-      // Si el usuario escribió exactamente una sigla válida, la asignamos automáticamente
       const catalogo = obtenerCatalogoOS();
       const coincidenciaExacta = catalogo.find(function(item) {
         return (item.sigla || '').trim().toUpperCase() === texto.trim().toUpperCase();
@@ -1925,7 +1923,6 @@
       poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      // Datalist para el filtro superior de Siglas
       const dlFiltro = document.getElementById('datalist_siglas_filtro');
       if (dlFiltro) {
         const catalogo = obtenerCatalogoOS();
@@ -1983,7 +1980,7 @@
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
         document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
-        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los registros: ' + (err.message || err) + '</td></tr>';
+        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los registros: ' + (err.message || err) + '</td></tr>';
         mostrarAlerta('Error Supabase: ' + (err.message || err), 'error');
       }
     }
@@ -2075,7 +2072,7 @@
       const tbody = document.getElementById('tbodyAfiliados');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
         return;
       }
 
@@ -2083,7 +2080,6 @@
         const cuilEsc = String(af.CUIL || '').replace(/'/g, "\\'");
         return '<tr>' +
           '<td><input type="checkbox" class="chk-af" /></td>' +
-          '<td class="cell-action" onclick="abrirDrawerTurno(\'' + cuilEsc + '\')" title="Asignar turno">📅</td>' +
           '<td class="cell-action" onclick="editarAfiliadoPorCuil(\'' + cuilEsc + '\')" title="Editar registro">»</td>' +
           '<td><b>' + (af.CUIL || '') + '</b></td>' +
           '<td>' + (af['APELLIDO Y NOMBRE'] || '') + '</td>' +
