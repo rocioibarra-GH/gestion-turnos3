@@ -500,23 +500,13 @@
       gap: 12px;
       margin-bottom: 18px;
     }
-    .filters-grid-5 {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 18px;
-    }
     @media (max-width: 1200px) {
       .filters-grid {
         grid-template-columns: repeat(3, 1fr);
       }
-      .filters-grid-5 {
-        grid-template-columns: repeat(3, 1fr);
-      }
     }
     @media (max-width: 700px) {
-      .filters-grid,
-      .filters-grid-5 {
+      .filters-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -785,7 +775,7 @@
       display: block;
     }
 
-    /* DRAWER */
+    /* DRAWER (PANEL LATERAL PARA AGREGAR / EDITAR / CLAVE) */
     .drawer-overlay {
       position: fixed;
       inset: 0;
@@ -877,16 +867,6 @@
       font-weight: 600;
       cursor: pointer;
     }
-    .info-box-readonly {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin-bottom: 16px;
-      font-size: 0.8rem;
-      color: #475569;
-      line-height: 1.5;
-    }
   </style>
 </head>
 <body>
@@ -956,7 +936,7 @@
     </div>
   </div>
 
-  <!-- APLICACIÓN PRINCIPAL -->
+  <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA INICIAR SESIÓN) -->
   <div class="app-container hidden" id="appContainer">
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
@@ -991,10 +971,6 @@
         <div class="nav-item sub-item" id="nav-turnos" onclick="cambiarVista('turnos')">
           <span class="nav-icon">📅</span>
           <span class="nav-label">Turnos y Solicitudes</span>
-        </div>
-        <div class="nav-item sub-item" id="nav-sondeos" onclick="cambiarVista('sondeos')">
-          <span class="nav-icon">📊</span>
-          <span class="nav-label">Sondeos</span>
         </div>
 
         <div class="nav-item" onclick="abrirDrawerAfiliado()">
@@ -1055,7 +1031,7 @@
       <main class="content">
         <div id="alertBanner" class="alert-banner"></div>
 
-        <!-- VISTA 1: AFILIADOS / BASE DE DATOS -->
+        <!-- VISTA AFILIADOS / BASE DE DATOS (PRINCIPAL) -->
         <section id="vistaAfiliados">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="limpiarFiltrosAfiliados()">‹ Regresar</button>
@@ -1101,7 +1077,7 @@
           <div class="grid-card">
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
-              <button type="button" class="tool-btn" onclick="cambiarVista('sondeos')" title="Ver Sondeos">📊</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
               <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
                 ⚑
                 <span class="tool-badge" id="badgeTotalAfiliados">0</span>
@@ -1142,13 +1118,14 @@
           </div>
         </section>
 
-        <!-- VISTA 2: TURNOS -->
+        <!-- VISTA TURNOS -->
         <section id="vistaTurnos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
             <button type="button" class="btn-pill" onclick="abrirDrawerTurno()">Agregar ›</button>
           </div>
 
+          <!-- 6 FILTROS OUTLINED -->
           <div class="filters-grid">
             <div class="outlined-field">
               <label>Estado</label>
@@ -1182,6 +1159,7 @@
             </div>
           </div>
 
+          <!-- DATAGRID TURNOS -->
           <div class="grid-card">
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
@@ -1229,91 +1207,11 @@
             </div>
           </div>
         </section>
-
-        <!-- VISTA 3: SONDEOS (JOIN AUTOMÁTICO CON AFILIADOS) -->
-        <section id="vistaSondeos" style="display:none;">
-          <div class="action-bar">
-            <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
-            <button type="button" class="btn-pill" onclick="exportarCSV('sondeos')">Exportar Sondeos CSV ⤓</button>
-          </div>
-
-          <div class="filters-grid-5">
-            <div class="outlined-field">
-              <label>Cuil - Titular</label>
-              <input type="text" id="f_so_cuil" placeholder="Buscar por CUIL..." oninput="filtrarSondeos()" />
-            </div>
-            <div class="outlined-field">
-              <label>Apellido y Nombre</label>
-              <input type="text" id="f_so_nombre" placeholder="Buscar afiliado..." oninput="filtrarSondeos()" />
-            </div>
-            <div class="outlined-field">
-              <label>Régimen</label>
-              <select id="f_so_regimen" onchange="filtrarSondeos()">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="outlined-field">
-              <label>Avanzar?</label>
-              <select id="f_so_avanzar" onchange="filtrarSondeos()">
-                <option value="">Todos</option>
-                <option value="SI">SI</option>
-                <option value="NO">NO</option>
-                <option value="PENDIENTE">PENDIENTE</option>
-              </select>
-            </div>
-            <div class="outlined-field">
-              <label>Cuadro Clínico</label>
-              <input type="text" id="f_so_cuadro" placeholder="Filtrar patología..." oninput="filtrarSondeos()" />
-            </div>
-          </div>
-
-          <div class="grid-card">
-            <div class="grid-toolbar">
-              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
-              <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
-              <button type="button" class="tool-btn" title="Total Sondeos">
-                ⚑
-                <span class="tool-badge" id="badgeTotalSondeos">0</span>
-              </button>
-              <button type="button" class="tool-btn" onclick="limpiarFiltrosSondeos()" title="Limpiar filtros">
-                ▼
-                <span class="tool-badge" id="badgeFiltrosSondeos">0</span>
-              </button>
-              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('sondeos')" title="Exportar Sondeos CSV">⤓</button>
-              <div class="toolbar-right-info" id="infoSondeos">0 registros</div>
-            </div>
-
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-so')" /></th>
-                    <th>Editar</th>
-                    <th>Cuil - Titular</th>
-                    <th>Apellido y Nombre</th>
-                    <th>Nro Celular</th>
-                    <th>Régimen</th>
-                    <th>Siglas (Obra Social)</th>
-                    <th>Localidad</th>
-                    <th>Tipo de Gestión</th>
-                    <th>AVANZAR?</th>
-                    <th>CUADRO CLINICO</th>
-                    <th>VALORES</th>
-                    <th>GRUPO FAMILIAR</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodySondeos">
-                  <tr><td colspan="13" style="text-align:center; padding:30px; color:#64748b;">Cargando sondeos...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
       </main>
     </div>
   </div>
 
-  <!-- DRAWER: CAMBIAR CONTRASEÑA DEL OPERADOR -->
+  <!-- DRAWER: CAMBIAR CONTRASEÑA DEL OPERADOR (USUARIO Y CORREO BLOQUEADOS) -->
   <div class="drawer-overlay" id="drawerClave">
     <div class="drawer-panel">
       <div class="drawer-header">
@@ -1353,7 +1251,7 @@
     </div>
   </div>
 
-  <!-- DRAWER: NUEVO / EDITAR DATO EN AFILIADOS -->
+  <!-- DRAWER: NUEVO / EDITAR DATO -->
   <div class="drawer-overlay" id="drawerAfiliado">
     <div class="drawer-panel">
       <div class="drawer-header">
@@ -1384,6 +1282,7 @@
             <input type="email" id="af_correo" placeholder="correo@ejemplo.com" />
           </div>
 
+          <!-- DESPLEGABLE REGIMEN -->
           <div class="form-field">
             <label>RÉGIMEN</label>
             <select id="af_regimen">
@@ -1391,6 +1290,7 @@
             </select>
           </div>
 
+          <!-- BUSCADOR AUTOCOMPLETABLE SIGLAS (VINCULADO A TABLA obras_sociales) -->
           <div class="form-field">
             <label>SIGLAS (OBRA SOCIAL)</label>
             <div class="combo-wrapper" id="siglasComboWrapper">
@@ -1411,6 +1311,7 @@
             </div>
           </div>
 
+          <!-- DESPLEGABLE LOCALIDAD -->
           <div class="form-field">
             <label>LOCALIDAD</label>
             <select id="af_localidad">
@@ -1418,6 +1319,7 @@
             </select>
           </div>
 
+          <!-- DESPLEGABLE TIPO DE GESTION -->
           <div class="form-field">
             <label>TIPO DE GESTIÓN</label>
             <select id="af_gestion">
@@ -1429,54 +1331,6 @@
         <div class="drawer-footer">
           <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
           <button type="submit" class="btn-pill">Guardar Dato ›</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- DRAWER: EDITAR CAMPOS PROPIOS DE SONDEOS -->
-  <div class="drawer-overlay" id="drawerSondeo">
-    <div class="drawer-panel">
-      <div class="drawer-header">
-        <h3>Evaluación de Sondeo</h3>
-        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
-      </div>
-      <form id="formSondeo" onsubmit="guardarSondeo(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
-        <div class="drawer-body">
-          <div class="info-box-readonly" id="so_info_afiliado"></div>
-
-          <input type="hidden" id="so_cuil" value="" />
-
-          <div class="form-field">
-            <label>AVANZAR?</label>
-            <select id="so_avanzar">
-              <option value="">-- Seleccionar --</option>
-              <option value="SI">SI</option>
-              <option value="NO">NO</option>
-              <option value="PENDIENTE">PENDIENTE</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label>CUADRO CLINICO</label>
-            <input type="text" id="so_cuadro" list="datalist_patologias" placeholder="Escribir o elegir patología..." />
-            <datalist id="datalist_patologias"></datalist>
-          </div>
-
-          <div class="form-field">
-            <label>VALORES</label>
-            <input type="text" id="so_valores" placeholder="Ej: $45.000 / PLAN BASE..." />
-          </div>
-
-          <div class="form-field">
-            <label>GRUPO FAMILIAR (CANTIDAD)</label>
-            <input type="number" id="so_grupo" min="0" step="1" placeholder="Ej: 1, 2, 4..." />
-          </div>
-        </div>
-
-        <div class="drawer-footer">
-          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
-          <button type="submit" class="btn-pill">Guardar Sondeo ›</button>
         </div>
       </form>
     </div>
@@ -1510,6 +1364,7 @@
             <input type="time" id="tu_hora" required />
           </div>
 
+          <!-- DESPLEGABLE ESTADO -->
           <div class="form-field">
             <label>ESTADO</label>
             <select id="tu_estado">
@@ -1517,6 +1372,7 @@
             </select>
           </div>
 
+          <!-- DESPLEGABLE OPERADOR -->
           <div class="form-field">
             <label>OPERADOR</label>
             <select id="tu_operador">
@@ -1544,12 +1400,11 @@
     let modoRecuperacionClave = false;
     let listaAfiliados = [];
     let listaTurnos = [];
-    let listaSondeos = [];
     let listaObrasSociales = [];
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
 
-    cconst OPCIONES_BASE = {
+    const OPCIONES_BASE = {
       REGIMEN: [
         'MONOTRIBUTO',
         'MONOT. SOCIAL',
@@ -1565,7 +1420,6 @@
         'MONOT I',
         'JUBILADO'
       ],
-
       SIGLAS_FALLBACK: [
         { sigla: 'OSSACRA', nombre: 'Obra Social de la Asociación Civil Prosindicato de Amas de Casa' },
         { sigla: 'OSSIMRA', nombre: 'Obra Social del Personal de Supervisores de la Industria Metalmecánica' },
@@ -1614,7 +1468,7 @@
         'RIACHUELO',
         'SANTA LUCIA'
       ],
- ESTADO: [
+      ESTADO: [
         'COORDINAR TURNO',
         'CITADO',
         'ASISTIO',
@@ -1652,7 +1506,6 @@
         'CONVENIO DE PAGO'
       ]
     };
-
 
     async function iniciarApp() {
       actualizarDesplegables();
@@ -2022,19 +1875,15 @@
     }
 
     function cambiarVista(vista) {
-      document.getElementById('vistaAfiliados').style.display = vista === 'afiliados' ? 'block' : 'none';
       document.getElementById('vistaTurnos').style.display = vista === 'turnos' ? 'block' : 'none';
-      document.getElementById('vistaSondeos').style.display = vista === 'sondeos' ? 'block' : 'none';
+      document.getElementById('vistaAfiliados').style.display = vista === 'afiliados' ? 'block' : 'none';
 
-      document.getElementById('nav-afiliados').classList.toggle('active', vista === 'afiliados');
       document.getElementById('nav-turnos').classList.toggle('active', vista === 'turnos');
-      document.getElementById('nav-sondeos').classList.toggle('active', vista === 'sondeos');
+      document.getElementById('nav-afiliados').classList.toggle('active', vista === 'afiliados');
 
       const bc = document.getElementById('breadcrumb');
       if (vista === 'turnos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos y Solicitudes</span>';
-      } else if (vista === 'sondeos') {
-        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Sondeos</span>';
       } else {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
       }
@@ -2074,8 +1923,6 @@
       poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      poblarSelect('f_so_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
-
       const dlFiltro = document.getElementById('datalist_siglas_filtro');
       if (dlFiltro) {
         const catalogo = obtenerCatalogoOS();
@@ -2094,14 +1941,6 @@
           opt.textContent = af.CUIL + ' - ' + (af['APELLIDO Y NOMBRE'] || '');
           selCuil.appendChild(opt);
         });
-      }
-
-      const dlPatologias = document.getElementById('datalist_patologias');
-      if (dlPatologias && listaSondeos.length > 0) {
-        const patUnicas = Array.from(new Set(listaSondeos.map(function(s) { return s['CUADRO CLINICO']; }).filter(Boolean)));
-        dlPatologias.innerHTML = patUnicas.map(function(p) {
-          return '<option value="' + p + '">';
-        }).join('');
       }
     }
 
@@ -2122,21 +1961,15 @@
         if (resTu.error) throw resTu.error;
         listaTurnos = resTu.data || [];
 
-        const resSo = await supabaseClient
-          .from('SONDEOS')
-          .select('*, afiliados(*)')
-          .order('CUIL', { ascending: true });
-        if (!resSo.error && resSo.data) {
-          listaSondeos = resSo.data;
-        }
-
         const resOs = await supabaseClient
           .from('obras_sociales')
           .select('sigla, nombre')
           .order('sigla', { ascending: true })
           .range(0, 999);
 
-        if (!resOs.error && resOs.data && resOs.data.length > 0) {
+        if (resOs.error) {
+          mostrarAlerta('Aviso obras_sociales: ' + resOs.error.message, 'error');
+        } else if (resOs.data && resOs.data.length > 0) {
           listaObrasSociales = resOs.data;
         }
 
@@ -2144,7 +1977,6 @@
         actualizarDesplegables();
         filtrarTurnos();
         filtrarAfiliados();
-        filtrarSondeos();
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
         document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
@@ -2261,58 +2093,6 @@
       }).join('');
     }
 
-    function filtrarSondeos() {
-      const fCuil = document.getElementById('f_so_cuil').value.toLowerCase().trim();
-      const fNom = document.getElementById('f_so_nombre').value.toLowerCase().trim();
-      const fReg = document.getElementById('f_so_regimen').value.toLowerCase();
-      const fAva = document.getElementById('f_so_avanzar').value.toLowerCase();
-      const fCua = document.getElementById('f_so_cuadro').value.toLowerCase().trim();
-
-      const activos = [fCuil, fNom, fReg, fAva, fCua].filter(Boolean).length;
-      document.getElementById('badgeFiltrosSondeos').textContent = activos;
-      document.getElementById('badgeTotalSondeos').textContent = listaSondeos.length;
-
-      const filtrados = listaSondeos.filter(function(s) {
-        const af = s.afiliados || {};
-        return (!fCuil || (s.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
-               (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
-               (!fReg || (af.REGIMEN || '').toLowerCase() === fReg) &&
-               (!fAva || (s['AVANZAR?'] || '').toLowerCase() === fAva) &&
-               (!fCua || (s['CUADRO CLINICO'] || '').toLowerCase().indexOf(fCua) !== -1);
-      });
-
-      document.getElementById('infoSondeos').textContent = filtrados.length + ' registros';
-      const tbody = document.getElementById('tbodySondeos');
-
-      if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#64748b;">Aún no hay registros en Sondeos (se cargan automáticamente al registrar OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO en Base de Datos).</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = filtrados.map(function(s) {
-        const af = s.afiliados || {};
-        const cuilEsc = String(s.CUIL || '').replace(/'/g, "\\'");
-        const avaUpper = (s['AVANZAR?'] || '').toUpperCase();
-        const avaClass = avaUpper === 'SI' ? 'text-si' : avaUpper === 'NO' ? 'text-no' : '';
-
-        return '<tr>' +
-          '<td><input type="checkbox" class="chk-so" /></td>' +
-          '<td class="cell-action" onclick="editarSondeoPorCuil(\'' + cuilEsc + '\')" title="Completar Sondeo">»</td>' +
-          '<td><b>' + (s.CUIL || '') + '</b></td>' +
-          '<td>' + (af['APELLIDO Y NOMBRE'] || '-') + '</td>' +
-          '<td>' + (af['NRO CELULAR'] || '-') + '</td>' +
-          '<td>' + (af.REGIMEN || '-') + '</td>' +
-          '<td>' + (af.SIGLAS || '-') + '</td>' +
-          '<td>' + (af.LOCALIDAD || '-') + '</td>' +
-          '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
-          '<td class="' + avaClass + '">' + (s['AVANZAR?'] || '-') + '</td>' +
-          '<td>' + (s['CUADRO CLINICO'] || '-') + '</td>' +
-          '<td>' + (s.VALORES || '-') + '</td>' +
-          '<td>' + (s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : '-') + '</td>' +
-        '</tr>';
-      }).join('');
-    }
-
     function limpiarFiltrosTurnos() {
       ['f_tu_estado', 'f_tu_operador', 'f_tu_fecha', 'f_tu_cuil', 'f_tu_nombre', 'f_tu_localidad'].forEach(function(id) {
         document.getElementById(id).value = '';
@@ -2325,13 +2105,6 @@
         document.getElementById(id).value = '';
       });
       filtrarAfiliados();
-    }
-
-    function limpiarFiltrosSondeos() {
-      ['f_so_cuil', 'f_so_nombre', 'f_so_regimen', 'f_so_avanzar', 'f_so_cuadro'].forEach(function(id) {
-        document.getElementById(id).value = '';
-      });
-      filtrarSondeos();
     }
 
     function ordenarTurnos() {
@@ -2361,7 +2134,6 @@
     function cerrarDrawers() {
       document.getElementById('drawerAfiliado').classList.remove('open');
       document.getElementById('drawerTurno').classList.remove('open');
-      document.getElementById('drawerSondeo').classList.remove('open');
       document.getElementById('drawerClave').classList.remove('open');
       cerrarComboSiglas();
     }
@@ -2409,27 +2181,6 @@
       setValorSiglaFormulario(af.SIGLAS);
       setSelectValor('af_localidad', af.LOCALIDAD);
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
-    }
-
-    function editarSondeoPorCuil(cuil) {
-      if (!usuarioActual) return;
-      const item = listaSondeos.find(function(s) { return s.CUIL === cuil; });
-      if (!item) return;
-
-      const af = item.afiliados || {};
-      document.getElementById('formSondeo').reset();
-      document.getElementById('so_cuil').value = item.CUIL || '';
-      document.getElementById('so_info_afiliado').innerHTML =
-        '<b>CUIL:</b> ' + (item.CUIL || '') + '<br>' +
-        '<b>Afiliado:</b> ' + (af['APELLIDO Y NOMBRE'] || '-') + '<br>' +
-        '<b>Régimen:</b> ' + (af.REGIMEN || '-') + ' &nbsp;|&nbsp; <b>Siglas:</b> ' + (af.SIGLAS || '-') + '<br>' +
-        '<b>Gestión:</b> ' + (af['TIPO DE GESTION'] || '-') + ' &nbsp;|&nbsp; <b>Celular:</b> ' + (af['NRO CELULAR'] || '-');
-
-      setSelectValor('so_avanzar', item['AVANZAR?']);
-      document.getElementById('so_cuadro').value = item['CUADRO CLINICO'] || '';
-      document.getElementById('so_valores').value = item.VALORES || '';
-      document.getElementById('so_grupo').value = item['GRUPO FAMILIAR'] != null ? item['GRUPO FAMILIAR'] : '';
-      document.getElementById('drawerSondeo').classList.add('open');
     }
 
     function abrirDrawerTurno(cuilPreseleccionado) {
@@ -2501,37 +2252,6 @@
       }
     }
 
-    async function guardarSondeo(e) {
-      e.preventDefault();
-      if (!supabaseClient || !usuarioActual) return;
-
-      const cuil = document.getElementById('so_cuil').value;
-      const ava = document.getElementById('so_avanzar').value.trim();
-      const cua = document.getElementById('so_cuadro').value.trim().toUpperCase();
-      const val = document.getElementById('so_valores').value.trim().toUpperCase();
-      const gru = document.getElementById('so_grupo').value.trim();
-
-      const payload = {
-        'AVANZAR?': ava || null,
-        'CUADRO CLINICO': cua || null,
-        'VALORES': val || null,
-        'GRUPO FAMILIAR': gru !== '' ? Number(gru) : null
-      };
-
-      const res = await supabaseClient
-        .from('SONDEOS')
-        .update(payload)
-        .eq('CUIL', cuil);
-
-      if (res.error) {
-        mostrarAlerta('Error al guardar sondeo: ' + res.error.message, 'error');
-      } else {
-        mostrarAlerta('Sondeo actualizado correctamente.', 'success');
-        cerrarDrawers();
-        cargarDatos();
-      }
-    }
-
     async function guardarTurno(e) {
       e.preventDefault();
       if (!supabaseClient || !usuarioActual) return;
@@ -2565,45 +2285,21 @@
     }
 
     function exportarCSV(tipo) {
-      let datos = listaAfiliados;
-      if (tipo === 'turnos') datos = listaTurnos;
-      if (tipo === 'sondeos') datos = listaSondeos;
+      const datos = tipo === 'turnos' ? listaTurnos : listaAfiliados;
       if (!datos.length) return;
 
-      let filas = [];
-      if (tipo === 'turnos') {
-        filas = [['ID', 'CUIL', 'Afiliado', 'Fecha', 'Hora', 'Estado', 'Operador']].concat(
-          datos.map(function(t) {
-            const nom = (t.afiliados && t.afiliados['APELLIDO Y NOMBRE']) ? t.afiliados['APELLIDO Y NOMBRE'] : '';
-            return [t.id, t.CUIL, nom, t.FECHA, t.HORA, t.ESTADO || '', t.OPERADOR || ''];
-          })
-        );
-      } else if (tipo === 'sondeos') {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'AVANZAR?', 'CUADRO CLINICO', 'VALORES', 'GRUPO FAMILIAR']].concat(
-          datos.map(function(s) {
-            const af = s.afiliados || {};
-            return [
-              s.CUIL,
-              af['APELLIDO Y NOMBRE'] || '',
-              af['NRO CELULAR'] || '',
-              af.REGIMEN || '',
-              af.SIGLAS || '',
-              af.LOCALIDAD || '',
-              af['TIPO DE GESTION'] || '',
-              s['AVANZAR?'] || '',
-              s['CUADRO CLINICO'] || '',
-              s.VALORES || '',
-              s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : ''
-            ];
-          })
-        );
-      } else {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion']].concat(
-          datos.map(function(a) {
-            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || ''];
-          })
-        );
-      }
+      const filas = tipo === 'turnos'
+        ? [['ID', 'CUIL', 'Afiliado', 'Fecha', 'Hora', 'Estado', 'Operador']].concat(
+            datos.map(function(t) {
+              const nom = (t.afiliados && t.afiliados['APELLIDO Y NOMBRE']) ? t.afiliados['APELLIDO Y NOMBRE'] : '';
+              return [t.id, t.CUIL, nom, t.FECHA, t.HORA, t.ESTADO || '', t.OPERADOR || ''];
+            })
+          )
+        : [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion']].concat(
+            datos.map(function(a) {
+              return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || ''];
+            })
+          );
 
       const csv = filas.map(function(r) {
         return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
