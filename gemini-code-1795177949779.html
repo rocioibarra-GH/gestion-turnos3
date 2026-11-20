@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LATIOS - Gestión OSSACRA | Afiliados y Turnos</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --nav-blue: #0d4b84;
+      --sidebar-bg: #0b4376;
+      --sidebar-dark: #08345c;
+      --sidebar-active: #165c9c;
+      --btn-blue: #1976d2;
+      --btn-blue-hover: #1565c0;
+      --bg-page: #f4f6f9;
+      --white: #ffffff;
+      --border: #d8dee6;
+      --text-main: #2c3e50;
+      --text-muted: #6c7a89;
+      --badge-orange: #d94e1f;
+      --green-ok: #2e9e5b;
+      --red-no: #e55353;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background-color: var(--sidebar-bg);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      transition: width 0.25s ease;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+    .sidebar.collapsed {
+      width: 68px;
+    }
+    .sidebar-brand {
+      height: 56px;
+      background-color: var(--sidebar-dark);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .brand-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+    .brand-logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #38bdf8, #34d399);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #08345c;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      white-space: nowrap;
+    }
+    .brand-title {
+      font-weight: 700;
+      font-size: 1rem;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+    }
+    .brand-sub {
+      font-size: 0.68rem;
+      color: #b0cde8;
+    }
+    .collapse-btn {
+      background: transparent;
+      border: none;
+      color: #cbd5e1;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+    .collapse-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .nav-section-title,
+    .sidebar.collapsed .nav-label {
+      display: none;
+    }
+
+    .nav-menu {
+      padding: 12px 10px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .nav-section-title {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #8ab4dc;
+      margin: 16px 10px 6px;
+      font-weight: 600;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #e2e8f0;
+      cursor: pointer;
+      font-size: 0.88rem;
+      margin-bottom: 4px;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-item.active {
+      background: var(--sidebar-active);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: inset 3px 0 0 #38bdf8;
+    }
+    .nav-item.sub-item {
+      padding-left: 24px;
+      font-size: 0.84rem;
+    }
+    .nav-icon {
+      width: 18px;
+      text-align: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* MAIN WRAPPER */
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* TOP NAVBAR */
+    .topbar {
+      height: 56px;
+      background-color: var(--nav-blue);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .hamburger {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+    }
+    .breadcrumb span.current {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      color: #e2e8f0;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #f59e0b;
+    }
+    .status-dot.ok {
+      background: #22c55e;
+    }
+    .status-dot.error {
+      background: #ef4444;
+    }
+    .btn-auth {
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-auth:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+    .btn-auth.logged-in {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(252, 165, 165, 0.5);
+    }
+    .btn-auth.logged-in:hover {
+      background: rgba(239, 68, 68, 0.45);
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.15;
+    }
+    .user-sede {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+    .user-role {
+      font-size: 0.7rem;
+      color: #b0cde8;
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* CONTENT AREA */
+    .content {
+      padding: 20px 24px;
+      flex: 1;
+    }
+
+    /* AUTH NOTICE BANNER */
+    .readonly-notice {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      color: #92400e;
+      padding: 9px 14px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-size: 0.83rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .readonly-notice button {
+      background: #d97706;
+      color: #fff;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 5px;
+      font-weight: 600;
+      font-size: 0.78rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .readonly-notice button:hover {
+      background: #b45309;
+    }
+
+    /* ACTION BUTTONS ROW */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .btn-pill {
+      background-color: var(--btn-blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-pill:hover {
+      background-color: var(--btn-blue-hover);
+    }
+    .btn-pill.locked {
+      opacity: 0.6;
+    }
+
+    /* OUTLINED FLOATING FILTERS */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    @media (max-width: 1200px) {
+      .filters-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 700px) {
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .outlined-field {
+      position: relative;
+      background: var(--white);
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.15s;
+    }
+    .outlined-field:focus-within {
+      border-color: var(--btn-blue);
+      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+    }
+    .outlined-field label {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background: var(--bg-page);
+      padding: 0 4px;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      pointer-events: none;
+    }
+    .outlined-field input,
+    .outlined-field select {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      padding: 0 12px;
+      font-size: 0.84rem;
+      color: var(--text-main);
+      outline: none;
+    }
+    .outlined-field select {
+      cursor: pointer;
+    }
+
+    /* DATAGRID CONTAINER */
+    .grid-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    /* TOOLBAR */
+    .grid-toolbar {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+      height: 44px;
+    }
+    .tool-btn {
+      position: relative;
+      width: 48px;
+      height: 100%;
+      border: none;
+      border-right: 1px solid var(--border);
+      background: transparent;
+      color: #475569;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      transition: background 0.15s;
+    }
+    .tool-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+    .tool-btn.active-tool {
+      background: #e2e8f0;
+    }
+    .tool-badge {
+      position: absolute;
+      top: 3px;
+      right: 3px;
+      background: var(--badge-orange);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+    }
+    .toolbar-right-info {
+      margin-left: auto;
+      padding-right: 14px;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* TABLE */
+    .table-scroll {
+      overflow-x: auto;
+      min-height: 360px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    thead th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid #edf2f7;
+      cursor: pointer;
+      user-select: none;
+    }
+    thead th:hover {
+      background: #eef2f6;
+    }
+    tbody tr {
+      border-bottom: 1px solid #edf2f7;
+      transition: background 0.1s;
+    }
+    tbody tr:hover {
+      background: #f1f7fe;
+    }
+    tbody td {
+      padding: 9px 12px;
+      color: #334155;
+    }
+    .cell-action {
+      color: var(--btn-blue);
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .cell-action:hover {
+      color: #0d4b84;
+    }
+    .text-si {
+      color: var(--green-ok);
+      font-weight: 600;
+    }
+    .text-no {
+      color: var(--red-no);
+      font-weight: 600;
+    }
+    .badge-estado {
+      font-weight: 600;
+      font-size: 0.76rem;
+    }
+    .est-pendiente { color: #d97706; }
+    .est-confirmado, .est-atendido { color: var(--green-ok); }
+    .est-cancelado { color: var(--red-no); }
+
+    /* ALERT BANNER */
+    .alert-banner {
+      padding: 10px 14px;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-size: 0.84rem;
+      display: none;
+    }
+    .alert-banner.success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      display: block;
+    }
+    .alert-banner.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      display: block;
+    }
+
+    /* DRAWER (PANEL LATERAL PARA AGREGAR / EDITAR) */
+    .drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      justify-content: flex-end;
+      z-index: 50;
+    }
+    .drawer-overlay.open {
+      display: flex;
+    }
+    .drawer-panel {
+      width: 440px;
+      max-width: 95vw;
+      background: #fff;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -4px 0 18px rgba(0, 0, 0, 0.15);
+    }
+    .drawer-header {
+      background: var(--nav-blue);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .drawer-header h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+    .drawer-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+    .drawer-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .form-field {
+      margin-bottom: 14px;
+    }
+    .form-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 5px;
+    }
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      background: #fff;
+    }
+    .form-field input:focus,
+    .form-field select:focus {
+      outline: none;
+      border-color: var(--btn-blue);
+      box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
+    }
+    .custom-input-box {
+      margin-top: 6px;
+      display: none;
+    }
+    .custom-input-box.visible {
+      display: block;
+    }
+    .drawer-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      background: #f8fafc;
+    }
+    .btn-cancel {
+      background: #e2e8f0;
+      color: #334155;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* MODAL LOGIN */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60;
+      padding: 16px;
+    }
+    .modal-overlay.open {
+      display: flex;
+    }
+    .modal-card {
+      background: #fff;
+      width: 380px;
+      max-width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+    }
+    .modal-header {
+      background: var(--nav-blue);
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+    .modal-body {
+      padding: 20px;
+    }
+    .modal-error {
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .modal-footer {
+      padding: 12px 20px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-left">
+        <div class="brand-logo">L</div>
+        <div class="brand-text">
+          <span class="brand-title">LATIOS</span>
+          <span class="brand-sub">Gestión OSSACRA</span>
+        </div>
+      </div>
+      <button type="button" class="collapse-btn" onclick="toggleSidebar()" title="Contraer menú">«</button>
+    </div>
+
+    <nav class="nav-menu">
+      <div class="nav-item" onclick="cambiarVista('turnos')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Inicio</span>
+      </div>
+
+      <div class="nav-section-title">MÓDULOS</div>
+      <div class="nav-item" onclick="cambiarVista('afiliados')">
+        <span class="nav-icon">👥</span>
+        <span class="nav-label">Afiliación</span>
+      </div>
+
+      <div class="nav-section-title">OPERACIÓN</div>
+      <div class="nav-item sub-item active" id="nav-turnos" onclick="cambiarVista('turnos')">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Turnos y Solicitudes</span>
+      </div>
+      <div class="nav-item sub-item" id="nav-afiliados" onclick="cambiarVista('afiliados')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">BASE DE DATOS</span>
+      </div>
+
+      <div class="nav-item" onclick="abrirDrawerTurno()">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Asignar Turno</span>
+      </div>
+      <div class="nav-item" onclick="abrirDrawerAfiliado()">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Nuevo Dato</span>
+      </div>
+      <div class="nav-item" onclick="cargarDatos()">
+        <span class="nav-icon">🔄</span>
+        <span class="nav-label">Sincronizar Base</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="breadcrumb" id="breadcrumb">
+          <span>Inicio</span>
+          <span>›</span>
+          <span>Operación</span>
+          <span>›</span>
+          <span class="current">Turnos y Solicitudes</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="status-pill" id="connStatus">
+          <span class="status-dot" id="connDot"></span>
+          <span id="connText">Iniciando...</span>
+        </div>
+
+        <button type="button" class="btn-auth" id="btnAuthAction" onclick="manejarBotonAuth()">
+          🔒 Iniciar Sesión
+        </button>
+
+        <div class="user-profile">
+          <div class="user-avatar" id="userAvatar">C</div>
+          <div class="user-info">
+            <span class="user-sede">CORRIENTES</span>
+            <span class="user-role" id="userEmailLabel">Solo lectura</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <div id="readonlyNotice" class="readonly-notice">
+        <span>🔒 <strong>Modo solo lectura:</strong> Inicia sesión con tu cuenta de operador para agregar o modificar afiliados y turnos.</span>
+        <button type="button" onclick="abrirModalLogin()">Iniciar Sesión</button>
+      </div>
+
+      <div id="alertBanner" class="alert-banner"></div>
+
+      <!-- VISTA TURNOS -->
+      <section id="vistaTurnos">
+        <div class="action-bar">
+          <button type="button" class="btn-pill" onclick="limpiarFiltrosTurnos()">‹ Regresar</button>
+          <button type="button" class="btn-pill requiere-auth" onclick="abrirDrawerTurno()">Agregar ›</button>
+        </div>
+
+        <!-- 6 FILTROS OUTLINED -->
+        <div class="filters-grid">
+          <div class="outlined-field">
+            <label>Estado</label>
+            <select id="f_tu_estado" onchange="filtrarTurnos()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="outlined-field">
+            <label>Operador</label>
+            <select id="f_tu_operador" onchange="filtrarTurnos()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="outlined-field">
+            <label>Fecha</label>
+            <input type="date" id="f_tu_fecha" onchange="filtrarTurnos()" />
+          </div>
+          <div class="outlined-field">
+            <label>Cuil - Titular</label>
+            <input type="text" id="f_tu_cuil" placeholder="Ej: 20277150671" oninput="filtrarTurnos()" />
+          </div>
+          <div class="outlined-field">
+            <label>Apellido y Nombre</label>
+            <input type="text" id="f_tu_nombre" placeholder="Buscar titular..." oninput="filtrarTurnos()" />
+          </div>
+          <div class="outlined-field">
+            <label>Localidad</label>
+            <select id="f_tu_localidad" onchange="filtrarTurnos()">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DATAGRID TURNOS -->
+        <div class="grid-card">
+          <div class="grid-toolbar">
+            <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+            <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
+            <button type="button" class="tool-btn" onclick="abrirDrawerTurno()" title="Nuevo Turno">
+              ⚑
+              <span class="tool-badge" id="badgeTotalTurnos">0</span>
+            </button>
+            <button type="button" class="tool-btn" onclick="ordenarTurnos()" title="Ordenar registros">
+              ☰
+              <span class="tool-badge">1</span>
+            </button>
+            <button type="button" class="tool-btn" onclick="limpiarFiltrosTurnos()" title="Limpiar filtros activos">
+              ▼
+              <span class="tool-badge" id="badgeFiltrosTurnos">0</span>
+            </button>
+            <button type="button" class="tool-btn active-tool" onclick="exportarCSV('turnos')" title="Exportar a Excel / CSV">⤓</button>
+            <div class="toolbar-right-info" id="infoTurnos">0 registros</div>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-tu')" /></th>
+                  <th>Acceso</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                  <th>Estado</th>
+                  <th>Afiliado Cargado</th>
+                  <th>ID</th>
+                  <th>Cuil - Titular</th>
+                  <th onclick="ordenarTurnos()">1 ▴ Apellido y Nombre</th>
+                  <th>Localidad</th>
+                  <th>Régimen</th>
+                  <th>Siglas</th>
+                  <th>Tipo de Gestión</th>
+                  <th>Operador</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyTurnos">
+                <tr><td colspan="14" style="text-align:center; padding:30px; color:#64748b;">Iniciando conexión con Supabase...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- VISTA AFILIADOS / BASE DE DATOS -->
+      <section id="vistaAfiliados" style="display:none;">
+        <div class="action-bar">
+          <button type="button" class="btn-pill" onclick="cambiarVista('turnos')">‹ Regresar</button>
+          <button type="button" class="btn-pill requiere-auth" onclick="abrirDrawerAfiliado()">Agregar ›</button>
+        </div>
+
+        <!-- 6 FILTROS OUTLINED AFILIADOS -->
+        <div class="filters-grid">
+          <div class="outlined-field">
+            <label>Régimen</label>
+            <select id="f_af_regimen" onchange="filtrarAfiliados()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="outlined-field">
+            <label>Siglas</label>
+            <select id="f_af_siglas" onchange="filtrarAfiliados()">
+              <option value="">Todas</option>
+            </select>
+          </div>
+          <div class="outlined-field">
+            <label>Tipo de Gestión</label>
+            <select id="f_af_gestion" onchange="filtrarAfiliados()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="outlined-field">
+            <label>Cuil - Titular</label>
+            <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
+          </div>
+          <div class="outlined-field">
+            <label>Apellido y Nombre</label>
+            <input type="text" id="f_af_nombre" placeholder="Buscar afiliado..." oninput="filtrarAfiliados()" />
+          </div>
+          <div class="outlined-field">
+            <label>Localidad</label>
+            <select id="f_af_localidad" onchange="filtrarAfiliados()">
+              <option value="">Todas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DATAGRID AFILIADOS -->
+        <div class="grid-card">
+          <div class="grid-toolbar">
+            <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+            <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
+            <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
+              ⚑
+              <span class="tool-badge" id="badgeTotalAfiliados">0</span>
+            </button>
+            <button type="button" class="tool-btn" onclick="ordenarAfiliados()" title="Ordenar">
+              ☰
+              <span class="tool-badge">1</span>
+            </button>
+            <button type="button" class="tool-btn" onclick="limpiarFiltrosAfiliados()" title="Limpiar filtros">
+              ▼
+              <span class="tool-badge" id="badgeFiltrosAfiliados">0</span>
+            </button>
+            <button type="button" class="tool-btn active-tool" onclick="exportarCSV('afiliados')" title="Exportar Base CSV">⤓</button>
+            <div class="toolbar-right-info" id="infoAfiliados">0 registros</div>
+          </div>
+
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
+                  <th>Turno</th>
+                  <th>Editar</th>
+                  <th>Cuil - Titular</th>
+                  <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
+                  <th>Nro Celular</th>
+                  <th>Correo Electrónico</th>
+                  <th>Localidad</th>
+                  <th>Régimen</th>
+                  <th>Siglas</th>
+                  <th>Tipo de Gestión</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyAfiliados">
+                <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: INICIAR SESIÓN -->
+  <div class="modal-overlay" id="modalLogin">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Iniciar Sesión - Operador</h3>
+        <button type="button" class="drawer-close" onclick="cerrarModalLogin()">×</button>
+      </div>
+      <form onsubmit="iniciarSesion(event)">
+        <div class="modal-body">
+          <div id="loginError" class="modal-error"></div>
+          <div class="form-field">
+            <label>Correo Electrónico *</label>
+            <input type="email" id="login_email" required placeholder="operador@ossacra.org.ar" />
+          </div>
+          <div class="form-field" style="margin-bottom:0;">
+            <label>Contraseña *</label>
+            <input type="password" id="login_password" required placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarModalLogin()">Cancelar</button>
+          <button type="submit" class="btn-pill" id="btnSubmitLogin">Ingresar ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DRAWER: NUEVO / EDITAR DATO -->
+  <div class="drawer-overlay" id="drawerAfiliado">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3 id="tituloDrawerAfiliado">Nuevo Dato</h3>
+        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
+      </div>
+      <form id="formAfiliado" onsubmit="guardarAfiliado(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="drawer-body">
+          <input type="hidden" id="af_modo_edicion" value="false" />
+
+          <div class="form-field">
+            <label>CUIL *</label>
+            <input type="text" id="af_cuil" required placeholder="Ej: 27415083039" />
+          </div>
+
+          <div class="form-field">
+            <label>APELLIDO Y NOMBRE *</label>
+            <input type="text" id="af_nombre" required placeholder="Ej: ROMERO JORGE RAMON" />
+          </div>
+
+          <div class="form-field">
+            <label>NRO CELULAR</label>
+            <input type="text" id="af_celular" placeholder="Ej: 3794123456" />
+          </div>
+
+          <div class="form-field">
+            <label>CORREO ELECTRÓNICO</label>
+            <input type="email" id="af_correo" placeholder="correo@ejemplo.com" />
+          </div>
+
+          <!-- DESPLEGABLE REGIMEN -->
+          <div class="form-field">
+            <label>RÉGIMEN</label>
+            <select id="af_regimen" onchange="verificarOtro('af_regimen', 'custom_regimen_box')">
+              <option value="">-- Seleccionar Régimen --</option>
+            </select>
+            <div class="custom-input-box" id="custom_regimen_box">
+              <input type="text" id="af_regimen_custom" placeholder="Escribe el valor exacto de REGIMEN" />
+            </div>
+          </div>
+
+          <!-- DESPLEGABLE SIGLAS -->
+          <div class="form-field">
+            <label>SIGLAS</label>
+            <select id="af_siglas" onchange="verificarOtro('af_siglas', 'custom_siglas_box')">
+              <option value="">-- Seleccionar Siglas --</option>
+            </select>
+            <div class="custom-input-box" id="custom_siglas_box">
+              <input type="text" id="af_siglas_custom" placeholder="Escribe el valor exacto de SIGLAS" />
+            </div>
+          </div>
+
+          <!-- DESPLEGABLE LOCALIDAD -->
+          <div class="form-field">
+            <label>LOCALIDAD</label>
+            <select id="af_localidad" onchange="verificarOtro('af_localidad', 'custom_localidad_box')">
+              <option value="">-- Seleccionar Localidad --</option>
+            </select>
+            <div class="custom-input-box" id="custom_localidad_box">
+              <input type="text" id="af_localidad_custom" placeholder="Escribe el valor exacto de LOCALIDAD" />
+            </div>
+          </div>
+
+          <!-- DESPLEGABLE TIPO DE GESTION -->
+          <div class="form-field">
+            <label>TIPO DE GESTIÓN</label>
+            <select id="af_gestion" onchange="verificarOtro('af_gestion', 'custom_gestion_box')">
+              <option value="">-- Seleccionar Tipo de Gestión --</option>
+            </select>
+            <div class="custom-input-box" id="custom_gestion_box">
+              <input type="text" id="af_gestion_custom" placeholder="Escribe el valor exacto de TIPO DE GESTION" />
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
+          <button type="submit" class="btn-pill">Guardar Dato ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DRAWER: ASIGNAR TURNO -->
+  <div class="drawer-overlay" id="drawerTurno">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>Asignar / Editar Turno</h3>
+        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
+      </div>
+      <form id="formTurno" onsubmit="guardarTurno(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="drawer-body">
+          <input type="hidden" id="tu_id" value="" />
+
+          <div class="form-field">
+            <label>CUIL DEL AFILIADO *</label>
+            <select id="tu_cuil" required>
+              <option value="">-- Seleccionar Afiliado por CUIL --</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>FECHA *</label>
+            <input type="date" id="tu_fecha" required />
+          </div>
+
+          <div class="form-field">
+            <label>HORA *</label>
+            <input type="time" id="tu_hora" required />
+          </div>
+
+          <!-- DESPLEGABLE ESTADO -->
+          <div class="form-field">
+            <label>ESTADO</label>
+            <select id="tu_estado" onchange="verificarOtro('tu_estado', 'custom_estado_box')">
+              <option value="">-- Seleccionar Estado --</option>
+            </select>
+            <div class="custom-input-box" id="custom_estado_box">
+              <input type="text" id="tu_estado_custom" placeholder="Escribe el valor exacto de ESTADO" />
+            </div>
+          </div>
+
+          <!-- DESPLEGABLE OPERADOR -->
+          <div class="form-field">
+            <label>OPERADOR</label>
+            <select id="tu_operador" onchange="verificarOtro('tu_operador', 'custom_operador_box')">
+              <option value="">-- Seleccionar Operador --</option>
+            </select>
+            <div class="custom-input-box" id="custom_operador_box">
+              <input type="text" id="tu_operador_custom" placeholder="Escribe el valor exacto de OPERADOR" />
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
+          <button type="submit" class="btn-pill">Guardar Turno ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://zinydngwvihnsdfgzpoe.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_oQ_ZTzI1gLCFtbT_Gt5w6A_gjtH2cjI';
+
+    let supabaseClient = null;
+    let usuarioActual = null;
+    let listaAfiliados = [];
+    let listaTurnos = [];
+    let ordenAscTurnos = true;
+    let ordenAscAfiliados = true;
+
+    const OPCIONES_BASE = {
+      REGIMEN: ['MONOTRIBUTO', 'RELACION DE DEPENDENCIA', 'SERVICIO DOMESTICO', 'JUBILADO', 'PENSIONADO', 'ADHERENTE'],
+      SIGLAS: ['OSSACRA', 'OSDE', 'OSECAC', 'UPCN', 'IOSCOR', 'PAMI', 'OTRA'],
+      LOCALIDAD: ['CAPITAL', 'GOYA', 'PASO DE LOS LIBRES', 'CURUZU CUATIA', 'MERCEDES', 'BELLA VISTA', 'ITUZAINGO', 'SANTO TOME', 'ESQUINA', 'MONTE CASEROS'],
+      TIPO_GESTION: ['EMPADRONAMIENTO', 'ALTA TITULAR', 'ALTA FAMILIAR', 'CAMBIO DE OBRA SOCIAL', 'RECLAMO', 'CONSULTA', 'BAJA'],
+      ESTADO: ['PENDIENTE', 'CONFIRMADO', 'ATENDIDO', 'CANCELADO', 'AUSENTE'],
+      OPERADOR: ['OPERADOR 1', 'OPERADOR 2', 'MESA DE ENTRADA', 'CORRIENTES']
+    };
+
+    async function iniciarApp() {
+      actualizarDesplegables();
+
+      try {
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+          setEstadoConexion('error', 'Sin librería Supabase (revisa internet)');
+          mostrarAlerta('No se pudo cargar la librería de Supabase desde internet. Verifica tu conexión.', 'error');
+          return;
+        }
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Verificar si ya existe una sesión activa
+        const { data } = await supabaseClient.auth.getSession();
+        actualizarEstadoSesion(data && data.session ? data.session.user : null);
+
+        // Escuchar cambios de sesión (login / logout)
+        supabaseClient.auth.onAuthStateChange(function(_event, session) {
+          actualizarEstadoSesion(session ? session.user : null);
+          cargarDatos();
+        });
+
+        cargarDatos();
+      } catch (e) {
+        setEstadoConexion('error', 'Error de inicio');
+        mostrarAlerta('Error al iniciar cliente Supabase: ' + e.message, 'error');
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', iniciarApp);
+    } else {
+      iniciarApp();
+    }
+
+    /* GESTIÓN DE SESIÓN Y PERMISOS */
+    function actualizarEstadoSesion(user) {
+      usuarioActual = user;
+      const btnAuth = document.getElementById('btnAuthAction');
+      const emailLabel = document.getElementById('userEmailLabel');
+      const avatar = document.getElementById('userAvatar');
+      const notice = document.getElementById('readonlyNotice');
+      const botonesProtegidos = document.querySelectorAll('.requiere-auth');
+
+      if (user) {
+        btnAuth.textContent = 'Cerrar Sesión';
+        btnAuth.classList.add('logged-in');
+        emailLabel.textContent = user.email || 'Operador activo';
+        avatar.textContent = (user.email || 'O')[0].toUpperCase();
+        notice.style.display = 'none';
+        botonesProtegidos.forEach(function(b) { b.classList.remove('locked'); });
+      } else {
+        btnAuth.textContent = '🔒 Iniciar Sesión';
+        btnAuth.classList.remove('logged-in');
+        emailLabel.textContent = 'Solo lectura';
+        avatar.textContent = 'C';
+        notice.style.display = 'flex';
+        botonesProtegidos.forEach(function(b) { b.classList.add('locked'); });
+      }
+    }
+
+    function verificarPermisoEscritura() {
+      if (!usuarioActual) {
+        mostrarAlerta('Debes iniciar sesión como operador para agregar o modificar registros.', 'error');
+        abrirModalLogin();
+        return false;
+      }
+      return true;
+    }
+
+    function manejarBotonAuth() {
+      if (usuarioActual) {
+        cerrarSesion();
+      } else {
+        abrirModalLogin();
+      }
+    }
+
+    function abrirModalLogin() {
+      document.getElementById('loginError').style.display = 'none';
+      document.getElementById('modalLogin').classList.add('open');
+      setTimeout(function() { document.getElementById('login_email').focus(); }, 50);
+    }
+
+    function cerrarModalLogin() {
+      document.getElementById('modalLogin').classList.remove('open');
+    }
+
+    async function iniciarSesion(e) {
+      e.preventDefault();
+      if (!supabaseClient) return;
+
+      const email = document.getElementById('login_email').value.trim();
+      const password = document.getElementById('login_password').value;
+      const errBox = document.getElementById('loginError');
+      const btn = document.getElementById('btnSubmitLogin');
+
+      errBox.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Ingresando...';
+
+      const { error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+
+      btn.disabled = false;
+      btn.textContent = 'Ingresar ›';
+
+      if (error) {
+        errBox.textContent = 'Error de acceso: ' + error.message;
+        errBox.style.display = 'block';
+      } else {
+        cerrarModalLogin();
+        mostrarAlerta('Sesión iniciada correctamente como ' + email, 'success');
+      }
+    }
+
+    async function cerrarSesion() {
+      if (!supabaseClient) return;
+      await supabaseClient.auth.signOut();
+      mostrarAlerta('Sesión cerrada. Modo solo lectura activado.', 'success');
+    }
+
+    function setEstadoConexion(estado, texto) {
+      const dot = document.getElementById('connDot');
+      const txt = document.getElementById('connText');
+      if (dot) {
+        dot.className = 'status-dot' + (estado === 'ok' ? ' ok' : estado === 'error' ? ' error' : '');
+      }
+      if (txt) {
+        txt.textContent = texto;
+      }
+    }
+
+    function mostrarAlerta(mensaje, tipo) {
+      const el = document.getElementById('alertBanner');
+      if (!el) return;
+      el.textContent = mensaje;
+      el.className = 'alert-banner ' + tipo;
+      setTimeout(function() { el.style.display = 'none'; }, 7000);
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function cambiarVista(vista) {
+      document.getElementById('vistaTurnos').style.display = vista === 'turnos' ? 'block' : 'none';
+      document.getElementById('vistaAfiliados').style.display = vista === 'afiliados' ? 'block' : 'none';
+
+      document.getElementById('nav-turnos').classList.toggle('active', vista === 'turnos');
+      document.getElementById('nav-afiliados').classList.toggle('active', vista === 'afiliados');
+
+      const bc = document.getElementById('breadcrumb');
+      if (vista === 'turnos') {
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos y Solicitudes</span>';
+      } else {
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
+      }
+    }
+
+    function verificarOtro(selectId, customBoxId) {
+      const val = document.getElementById(selectId).value;
+      const box = document.getElementById(customBoxId);
+      if (val === '__OTRO__') {
+        box.classList.add('visible');
+        box.querySelector('input').focus();
+      } else {
+        box.classList.remove('visible');
+      }
+    }
+
+    function obtenerValorSelect(selectId, customInputId) {
+      const val = document.getElementById(selectId).value;
+      if (val === '__OTRO__') {
+        return document.getElementById(customInputId).value.trim().toUpperCase();
+      }
+      return val.trim();
+    }
+
+    function poblarSelect(selectId, valoresUnicos, incluirOtro, placeholder) {
+      const sel = document.getElementById(selectId);
+      if (!sel) return;
+      const valorPrevio = sel.value;
+      sel.innerHTML = '<option value="">' + placeholder + '</option>';
+
+      valoresUnicos.forEach(function(v) {
+        if (!v) return;
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
+        sel.appendChild(opt);
+      });
+
+      if (incluirOtro) {
+        const optOtro = document.createElement('option');
+        optOtro.value = '__OTRO__';
+        optOtro.textContent = '+ Escribir otro valor...';
+        sel.appendChild(optOtro);
+      }
+
+      if (valorPrevio && Array.from(sel.options).some(function(o) { return o.value === valorPrevio; })) {
+        sel.value = valorPrevio;
+      }
+    }
+
+    function actualizarDesplegables() {
+      const regimenes = Array.from(new Set(OPCIONES_BASE.REGIMEN.concat(listaAfiliados.map(function(a) { return a.REGIMEN; }).filter(Boolean))));
+      const siglas = Array.from(new Set(OPCIONES_BASE.SIGLAS.concat(listaAfiliados.map(function(a) { return a.SIGLAS; }).filter(Boolean))));
+      const localidades = Array.from(new Set(OPCIONES_BASE.LOCALIDAD.concat(listaAfiliados.map(function(a) { return a.LOCALIDAD; }).filter(Boolean))));
+      const gestiones = Array.from(new Set(OPCIONES_BASE.TIPO_GESTION.concat(listaAfiliados.map(function(a) { return a['TIPO DE GESTION']; }).filter(Boolean))));
+      const estados = Array.from(new Set(OPCIONES_BASE.ESTADO.concat(listaTurnos.map(function(t) { return t.ESTADO; }).filter(Boolean))));
+      const operadores = Array.from(new Set(OPCIONES_BASE.OPERADOR.concat(listaTurnos.map(function(t) { return t.OPERADOR; }).filter(Boolean))));
+
+      poblarSelect('af_regimen', regimenes, true, '-- Seleccionar Régimen --');
+      poblarSelect('af_siglas', siglas, true, '-- Seleccionar Siglas --');
+      poblarSelect('af_localidad', localidades, true, '-- Seleccionar Localidad --');
+      poblarSelect('af_gestion', gestiones, true, '-- Seleccionar Tipo de Gestión --');
+      poblarSelect('tu_estado', estados, true, '-- Seleccionar Estado --');
+      poblarSelect('tu_operador', operadores, true, '-- Seleccionar Operador --');
+
+      poblarSelect('f_af_regimen', regimenes, false, 'Todos');
+      poblarSelect('f_af_siglas', siglas, false, 'Todas');
+      poblarSelect('f_af_gestion', gestiones, false, 'Todos');
+      poblarSelect('f_af_localidad', localidades, false, 'Todas');
+
+      poblarSelect('f_tu_estado', estados, false, 'Todos');
+      poblarSelect('f_tu_operador', operadores, false, 'Todos');
+      poblarSelect('f_tu_localidad', localidades, false, 'Todas');
+
+      const selCuil = document.getElementById('tu_cuil');
+      if (selCuil) {
+        selCuil.innerHTML = '<option value="">-- Seleccionar Afiliado por CUIL --</option>';
+        listaAfiliados.forEach(function(af) {
+          const opt = document.createElement('option');
+          opt.value = af.CUIL;
+          opt.textContent = af.CUIL + ' - ' + (af['APELLIDO Y NOMBRE'] || '');
+          selCuil.appendChild(opt);
+        });
+      }
+    }
+
+    async function cargarDatos() {
+      if (!supabaseClient) {
+        mostrarAlerta('Cliente Supabase no disponible.', 'error');
+        return;
+      }
+
+      setEstadoConexion('', 'Conectando...');
+
+      try {
+        const resAf = await supabaseClient.from('afiliados').select('*');
+        if (resAf.error) throw resAf.error;
+        listaAfiliados = resAf.data || [];
+
+        const resTu = await supabaseClient
+          .from('TURNOS')
+          .select('*, afiliados(*)')
+          .order('id', { ascending: false });
+
+        if (resTu.error) throw resTu.error;
+        listaTurnos = resTu.data || [];
+
+        setEstadoConexion('ok', 'Conectado');
+        actualizarDesplegables();
+        filtrarTurnos();
+        filtrarAfiliados();
+      } catch (err) {
+        setEstadoConexion('error', 'Error RLS / Red');
+        document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
+        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="11"
