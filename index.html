@@ -1437,4 +1437,338 @@
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
         document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
-        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="11"
+        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los registros: ' + (err.message || err) + '</td></tr>';
+        mostrarAlerta('Error Supabase: ' + (err.message || err), 'error');
+      }
+    }
+
+    function filtrarTurnos() {
+      const fEst = document.getElementById('f_tu_estado').value.toLowerCase();
+      const fOpe = document.getElementById('f_tu_operador').value.toLowerCase();
+      const fFec = document.getElementById('f_tu_fecha').value;
+      const fCuil = document.getElementById('f_tu_cuil').value.toLowerCase().trim();
+      const fNom = document.getElementById('f_tu_nombre').value.toLowerCase().trim();
+      const fLoc = document.getElementById('f_tu_localidad').value.toLowerCase();
+
+      const activos = [fEst, fOpe, fFec, fCuil, fNom, fLoc].filter(Boolean).length;
+      document.getElementById('badgeFiltrosTurnos').textContent = activos;
+      document.getElementById('badgeTotalTurnos').textContent = listaTurnos.length;
+
+      const filtrados = listaTurnos.filter(function(t) {
+        const af = t.afiliados || {};
+        const nombre = (af['APELLIDO Y NOMBRE'] || '').toLowerCase();
+        const localidad = (af.LOCALIDAD || '').toLowerCase();
+        const estado = (t.ESTADO || '').toLowerCase();
+        const operador = (t.OPERADOR || '').toLowerCase();
+        const cuil = (t.CUIL || '').toLowerCase();
+
+        return (!fEst || estado === fEst) &&
+               (!fOpe || operador === fOpe) &&
+               (!fFec || t.FECHA === fFec) &&
+               (!fCuil || cuil.indexOf(fCuil) !== -1) &&
+               (!fNom || nombre.indexOf(fNom) !== -1) &&
+               (!fLoc || localidad === fLoc);
+      });
+
+      document.getElementById('infoTurnos').textContent = filtrados.length + ' registros';
+      const tbody = document.getElementById('tbodyTurnos');
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#64748b;">No se encontraron turnos registrados. Haz clic en "Agregar ›" para cargar uno.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(function(t) {
+        const af = t.afiliados || {};
+        const tieneAf = Boolean(af.CUIL);
+        const estUpper = (t.ESTADO || '').toUpperCase();
+        const estClass = estUpper.indexOf('PEND') !== -1 ? 'est-pendiente' :
+                         estUpper.indexOf('CANC') !== -1 ? 'est-cancelado' : 'est-confirmado';
+
+        return '<tr>' +
+          '<td><input type="checkbox" class="chk-tu" /></td>' +
+          '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar turno">»</td>' +
+          '<td>' + (t.FECHA || '-') + '</td>' +
+          '<td>' + (t.HORA || '').slice(0, 5) + '</td>' +
+          '<td><span class="badge-estado ' + estClass + '">' + (t.ESTADO || 'PENDIENTE') + '</span></td>' +
+          '<td class="' + (tieneAf ? 'text-si' : 'text-no') + '">' + (tieneAf ? 'Si' : 'No') + '</td>' +
+          '<td>#' + t.id + '</td>' +
+          '<td><b>' + (t.CUIL || '') + '</b></td>' +
+          '<td>' + (af['APELLIDO Y NOMBRE'] || '-') + '</td>' +
+          '<td>' + (af.LOCALIDAD || '-') + '</td>' +
+          '<td>' + (af.REGIMEN || '-') + '</td>' +
+          '<td>' + (af.SIGLAS || '-') + '</td>' +
+          '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+          '<td>' + (t.OPERADOR || '-') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function filtrarAfiliados() {
+      const fReg = document.getElementById('f_af_regimen').value.toLowerCase();
+      const fSig = document.getElementById('f_af_siglas').value.toLowerCase();
+      const fGes = document.getElementById('f_af_gestion').value.toLowerCase();
+      const fCuil = document.getElementById('f_af_cuil').value.toLowerCase().trim();
+      const fNom = document.getElementById('f_af_nombre').value.toLowerCase().trim();
+      const fLoc = document.getElementById('f_af_localidad').value.toLowerCase();
+
+      const activos = [fReg, fSig, fGes, fCuil, fNom, fLoc].filter(Boolean).length;
+      document.getElementById('badgeFiltrosAfiliados').textContent = activos;
+      document.getElementById('badgeTotalAfiliados').textContent = listaAfiliados.length;
+
+      const filtrados = listaAfiliados.filter(function(af) {
+        return (!fReg || (af.REGIMEN || '').toLowerCase() === fReg) &&
+               (!fSig || (af.SIGLAS || '').toLowerCase() === fSig) &&
+               (!fGes || (af['TIPO DE GESTION'] || '').toLowerCase() === fGes) &&
+               (!fCuil || (af.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
+               (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
+               (!fLoc || (af.LOCALIDAD || '').toLowerCase() === fLoc);
+      });
+
+      document.getElementById('infoAfiliados').textContent = filtrados.length + ' registros';
+      const tbody = document.getElementById('tbodyAfiliados');
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(function(af) {
+        const cuilEsc = String(af.CUIL || '').replace(/'/g, "\\'");
+        return '<tr>' +
+          '<td><input type="checkbox" class="chk-af" /></td>' +
+          '<td class="cell-action" onclick="abrirDrawerTurno(\'' + cuilEsc + '\')" title="Asignar turno">📅</td>' +
+          '<td class="cell-action" onclick="editarAfiliadoPorCuil(\'' + cuilEsc + '\')" title="Editar registro">»</td>' +
+          '<td><b>' + (af.CUIL || '') + '</b></td>' +
+          '<td>' + (af['APELLIDO Y NOMBRE'] || '') + '</td>' +
+          '<td>' + (af['NRO CELULAR'] || '-') + '</td>' +
+          '<td>' + (af['CORREO ELECTRONICO'] || '-') + '</td>' +
+          '<td>' + (af.LOCALIDAD || '-') + '</td>' +
+          '<td>' + (af.REGIMEN || '-') + '</td>' +
+          '<td>' + (af.SIGLAS || '-') + '</td>' +
+          '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function limpiarFiltrosTurnos() {
+      ['f_tu_estado', 'f_tu_operador', 'f_tu_fecha', 'f_tu_cuil', 'f_tu_nombre', 'f_tu_localidad'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      filtrarTurnos();
+    }
+
+    function limpiarFiltrosAfiliados() {
+      ['f_af_regimen', 'f_af_siglas', 'f_af_gestion', 'f_af_cuil', 'f_af_nombre', 'f_af_localidad'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      filtrarAfiliados();
+    }
+
+    function ordenarTurnos() {
+      ordenAscTurnos = !ordenAscTurnos;
+      listaTurnos.sort(function(a, b) {
+        const nomA = (a.afiliados && a.afiliados['APELLIDO Y NOMBRE']) ? a.afiliados['APELLIDO Y NOMBRE'] : '';
+        const nomB = (b.afiliados && b.afiliados['APELLIDO Y NOMBRE']) ? b.afiliados['APELLIDO Y NOMBRE'] : '';
+        const cmp = nomA.localeCompare(nomB);
+        return ordenAscTurnos ? cmp : -cmp;
+      });
+      filtrarTurnos();
+    }
+
+    function ordenarAfiliados() {
+      ordenAscAfiliados = !ordenAscAfiliados;
+      listaAfiliados.sort(function(a, b) {
+        const cmp = (a['APELLIDO Y NOMBRE'] || '').localeCompare(b['APELLIDO Y NOMBRE'] || '');
+        return ordenAscAfiliados ? cmp : -cmp;
+      });
+      filtrarAfiliados();
+    }
+
+    function seleccionarTodos(master, cls) {
+      document.querySelectorAll('.' + cls).forEach(function(cb) { cb.checked = master.checked; });
+    }
+
+    function cerrarDrawers() {
+      document.getElementById('drawerAfiliado').classList.remove('open');
+      document.getElementById('drawerTurno').classList.remove('open');
+      document.querySelectorAll('.custom-input-box').forEach(function(b) { b.classList.remove('visible'); });
+    }
+
+    function abrirDrawerAfiliado() {
+      if (!verificarPermisoEscritura()) return;
+      document.getElementById('formAfiliado').reset();
+      document.getElementById('af_modo_edicion').value = 'false';
+      document.getElementById('af_cuil').readOnly = false;
+      document.getElementById('tituloDrawerAfiliado').textContent = 'Nuevo Dato';
+      document.getElementById('drawerAfiliado').classList.add('open');
+    }
+
+    function setValorSelectOEdicion(selectId, customBoxId, customInputId, valor) {
+      const sel = document.getElementById(selectId);
+      const box = document.getElementById(customBoxId);
+      if (!valor) {
+        sel.value = '';
+        box.classList.remove('visible');
+        return;
+      }
+      if (Array.from(sel.options).some(function(o) { return o.value === valor; })) {
+        sel.value = valor;
+        box.classList.remove('visible');
+      } else {
+        sel.value = '__OTRO__';
+        box.classList.add('visible');
+        document.getElementById(customInputId).value = valor;
+      }
+    }
+
+    function editarAfiliadoPorCuil(cuil) {
+      if (!verificarPermisoEscritura()) return;
+      const af = listaAfiliados.find(function(item) { return item.CUIL === cuil; });
+      if (!af) return;
+      abrirDrawerAfiliado();
+      document.getElementById('af_modo_edicion').value = 'true';
+      document.getElementById('tituloDrawerAfiliado').textContent = 'Editar Dato';
+      document.getElementById('af_cuil').value = af.CUIL || '';
+      document.getElementById('af_cuil').readOnly = true;
+      document.getElementById('af_nombre').value = af['APELLIDO Y NOMBRE'] || '';
+      document.getElementById('af_celular').value = af['NRO CELULAR'] || '';
+      document.getElementById('af_correo').value = af['CORREO ELECTRONICO'] || '';
+
+      setValorSelectOEdicion('af_regimen', 'custom_regimen_box', 'af_regimen_custom', af.REGIMEN);
+      setValorSelectOEdicion('af_siglas', 'custom_siglas_box', 'af_siglas_custom', af.SIGLAS);
+      setValorSelectOEdicion('af_localidad', 'custom_localidad_box', 'af_localidad_custom', af.LOCALIDAD);
+      setValorSelectOEdicion('af_gestion', 'custom_gestion_box', 'af_gestion_custom', af['TIPO DE GESTION']);
+    }
+
+    function abrirDrawerTurno(cuilPreseleccionado) {
+      if (!verificarPermisoEscritura()) return;
+      document.getElementById('formTurno').reset();
+      document.getElementById('tu_id').value = '';
+      if (cuilPreseleccionado) {
+        document.getElementById('tu_cuil').value = cuilPreseleccionado;
+      }
+      document.getElementById('drawerTurno').classList.add('open');
+    }
+
+    function editarTurnoPorId(id) {
+      if (!verificarPermisoEscritura()) return;
+      const t = listaTurnos.find(function(item) { return item.id === id; });
+      if (!t) return;
+      abrirDrawerTurno(t.CUIL);
+      document.getElementById('tu_id').value = t.id;
+      document.getElementById('tu_fecha').value = t.FECHA || '';
+      document.getElementById('tu_hora').value = (t.HORA || '').slice(0, 5);
+      setValorSelectOEdicion('tu_estado', 'custom_estado_box', 'tu_estado_custom', t.ESTADO);
+      setValorSelectOEdicion('tu_operador', 'custom_operador_box', 'tu_operador_custom', t.OPERADOR);
+    }
+
+    async function guardarAfiliado(e) {
+      e.preventDefault();
+      if (!supabaseClient) {
+        mostrarAlerta('No hay conexión activa con Supabase.', 'error');
+        return;
+      }
+      if (!verificarPermisoEscritura()) return;
+
+      const esEdicion = document.getElementById('af_modo_edicion').value === 'true';
+      const cuil = document.getElementById('af_cuil').value.trim();
+
+      const payload = {
+        'CUIL': cuil,
+        'APELLIDO Y NOMBRE': document.getElementById('af_nombre').value.trim().toUpperCase()
+      };
+
+      const cel = document.getElementById('af_celular').value.trim();
+      const cor = document.getElementById('af_correo').value.trim();
+      const reg = obtenerValorSelect('af_regimen', 'af_regimen_custom');
+      const sig = obtenerValorSelect('af_siglas', 'af_siglas_custom');
+      const loc = obtenerValorSelect('af_localidad', 'af_localidad_custom');
+      const ges = obtenerValorSelect('af_gestion', 'af_gestion_custom');
+
+      if (cel) payload['NRO CELULAR'] = cel;
+      if (cor) payload['CORREO ELECTRONICO'] = cor;
+      if (reg) payload['REGIMEN'] = reg;
+      if (sig) payload['SIGLAS'] = sig;
+      if (loc) payload['LOCALIDAD'] = loc;
+      if (ges) payload['TIPO DE GESTION'] = ges;
+
+      const res = esEdicion
+        ? await supabaseClient.from('afiliados').update(payload).eq('CUIL', cuil)
+        : await supabaseClient.from('afiliados').insert([payload]);
+
+      if (res.error) {
+        mostrarAlerta('Error al guardar dato: ' + res.error.message, 'error');
+      } else {
+        mostrarAlerta(esEdicion ? 'Registro actualizado correctamente.' : 'Dato registrado correctamente.', 'success');
+        cerrarDrawers();
+        cargarDatos();
+      }
+    }
+
+    async function guardarTurno(e) {
+      e.preventDefault();
+      if (!supabaseClient) {
+        mostrarAlerta('No hay conexión activa con Supabase.', 'error');
+        return;
+      }
+      if (!verificarPermisoEscritura()) return;
+
+      const idTurno = document.getElementById('tu_id').value;
+      const horaRaw = document.getElementById('tu_hora').value;
+      const horaConZona = horaRaw.length === 5 ? horaRaw + ':00-03' : horaRaw;
+
+      const payload = {
+        'CUIL': document.getElementById('tu_cuil').value.trim(),
+        'FECHA': document.getElementById('tu_fecha').value,
+        'HORA': horaConZona
+      };
+
+      const est = obtenerValorSelect('tu_estado', 'tu_estado_custom');
+      const ope = obtenerValorSelect('tu_operador', 'tu_operador_custom');
+      if (est) payload['ESTADO'] = est;
+      if (ope) payload['OPERADOR'] = ope;
+
+      const res = idTurno
+        ? await supabaseClient.from('TURNOS').update(payload).eq('id', idTurno)
+        : await supabaseClient.from('TURNOS').insert([payload]);
+
+      if (res.error) {
+        mostrarAlerta('Error al guardar turno: ' + res.error.message, 'error');
+      } else {
+        mostrarAlerta(idTurno ? 'Turno actualizado correctamente.' : 'Turno asignado correctamente.', 'success');
+        cerrarDrawers();
+        cargarDatos();
+      }
+    }
+
+    function exportarCSV(tipo) {
+      const datos = tipo === 'turnos' ? listaTurnos : listaAfiliados;
+      if (!datos.length) return;
+
+      const filas = tipo === 'turnos'
+        ? [['ID', 'CUIL', 'Afiliado', 'Fecha', 'Hora', 'Estado', 'Operador']].concat(
+            datos.map(function(t) {
+              const nom = (t.afiliados && t.afiliados['APELLIDO Y NOMBRE']) ? t.afiliados['APELLIDO Y NOMBRE'] : '';
+              return [t.id, t.CUIL, nom, t.FECHA, t.HORA, t.ESTADO || '', t.OPERADOR || ''];
+            })
+          )
+        : [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion']].concat(
+            datos.map(function(a) {
+              return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || ''];
+            })
+          );
+
+      const csv = filas.map(function(r) {
+        return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+      }).join('\n');
+
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'latios_' + tipo + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+      link.click();
+    }
+  </script>
+</body>
+</html>
