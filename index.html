@@ -373,7 +373,7 @@
     .topbar-right {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
     .status-pill {
       display: flex;
@@ -396,6 +396,20 @@
     }
     .status-dot.error {
       background: #ef4444;
+    }
+    .btn-top-action {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-top-action:hover {
+      background: rgba(255, 255, 255, 0.25);
     }
     .btn-logout {
       background: rgba(239, 68, 68, 0.25);
@@ -681,7 +695,7 @@
       display: block;
     }
 
-    /* DRAWER (PANEL LATERAL PARA AGREGAR / EDITAR) */
+    /* DRAWER (PANEL LATERAL PARA AGREGAR / EDITAR / CLAVE) */
     .drawer-overlay {
       position: fixed;
       inset: 0;
@@ -745,6 +759,11 @@
       font-size: 0.88rem;
       background: #fff;
     }
+    .form-field input[readonly] {
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: not-allowed;
+    }
     .form-field input:focus,
     .form-field select:focus {
       outline: none;
@@ -792,9 +811,9 @@
       <!-- FORMULARIO 1: INICIAR SESIÓN -->
       <form id="formLogin" onsubmit="iniciarSesion(event)">
         <div class="login-outlined-group">
-          <label for="login_usuario">Nombre de usuario o correo</label>
+          <label for="login_usuario">Correo electrónico o usuario</label>
           <span class="login-field-icon">👤</span>
-          <input type="text" id="login_usuario" required placeholder="DELEGACIONCORRIENTES" autocomplete="username" />
+          <input type="text" id="login_usuario" required placeholder="usuario@ossacra.org.ar" autocomplete="username" />
         </div>
 
         <div class="login-outlined-group">
@@ -816,9 +835,9 @@
       <!-- FORMULARIO 2: RECUPERAR CONTRASEÑA -->
       <form id="formRecupero" onsubmit="enviarRecupero(event)" style="display:none;">
         <div class="login-outlined-group">
-          <label for="rec_email">Correo de recuperación</label>
+          <label for="rec_email">Correo del operador</label>
           <span class="login-field-icon">✉️</span>
-          <input type="email" id="rec_email" required value="rocio.ibarra@ossacra.org.ar" />
+          <input type="email" id="rec_email" required placeholder="tu.correo@ossacra.org.ar" />
         </div>
 
         <button type="submit" class="login-submit-btn" id="btnSubmitRecupero">Enviar enlace de recuperación</button>
@@ -920,10 +939,14 @@
           <div class="user-profile">
             <div class="user-avatar" id="userAvatar">D</div>
             <div class="user-info">
-              <span class="user-sede" id="userSedeLabel">DELEGACIONCORRIENTES</span>
+              <span class="user-sede" id="userSedeLabel">OPERADOR</span>
               <span class="user-role" id="userEmailLabel">Operador activo</span>
             </div>
           </div>
+
+          <button type="button" class="btn-top-action" onclick="abrirDrawerClave()" title="Modificar mi contraseña">
+            🔑 Cambiar clave
+          </button>
 
           <button type="button" class="btn-logout" onclick="cerrarSesion()">
             Cerrar Sesión
@@ -1117,6 +1140,46 @@
     </div>
   </div>
 
+  <!-- DRAWER: CAMBIAR CONTRASEÑA DEL OPERADOR (USUARIO Y CORREO BLOQUEADOS) -->
+  <div class="drawer-overlay" id="drawerClave">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>Cambiar mi contraseña</h3>
+        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
+      </div>
+      <form id="formCambiarClave" onsubmit="cambiarClaveLogueado(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="drawer-body">
+          <div class="form-field">
+            <label>USUARIO ASIGNADO (NO MODIFICABLE)</label>
+            <input type="text" id="clave_usuario_fijo" readonly />
+          </div>
+
+          <div class="form-field">
+            <label>CORREO ASIGNADO (NO MODIFICABLE)</label>
+            <input type="text" id="clave_correo_fijo" readonly />
+          </div>
+
+          <hr style="border:none; border-top:1px solid #e2e8f0; margin:16px 0;" />
+
+          <div class="form-field">
+            <label>NUEVA CONTRASEÑA *</label>
+            <input type="password" id="clave_nueva_1" required minlength="6" placeholder="Mínimo 6 caracteres" />
+          </div>
+
+          <div class="form-field">
+            <label>REPETIR NUEVA CONTRASEÑA *</label>
+            <input type="password" id="clave_nueva_2" required minlength="6" placeholder="Repite la nueva contraseña" />
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
+          <button type="submit" class="btn-pill" id="btnGuardarClave">Actualizar clave ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- DRAWER: NUEVO / EDITAR DATO -->
   <div class="drawer-overlay" id="drawerAfiliado">
     <div class="drawer-panel">
@@ -1263,6 +1326,7 @@
   <script>
     const SUPABASE_URL = 'https://zinydngwvihnsdfgzpoe.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_oQ_ZTzI1gLCFtbT_Gt5w6A_gjtH2cjI';
+    const DOMINIO_INSTITUCIONAL = '@ossacra.org.ar';
     const CORREO_RECUPERO_DEFAULT = 'rocio.ibarra@ossacra.org.ar';
 
     let supabaseClient = null;
@@ -1340,7 +1404,10 @@
       document.getElementById('formLogin').style.display = 'none';
       document.getElementById('formNuevaClave').style.display = 'none';
       document.getElementById('formRecupero').style.display = 'block';
-      document.getElementById('rec_email').value = CORREO_RECUPERO_DEFAULT;
+      const usuarioEscrito = document.getElementById('login_usuario').value.trim();
+      document.getElementById('rec_email').value = usuarioEscrito
+        ? (usuarioEscrito.indexOf('@') !== -1 ? usuarioEscrito : usuarioEscrito + DOMINIO_INSTITUCIONAL)
+        : CORREO_RECUPERO_DEFAULT;
     }
 
     function mostrarLogin() {
@@ -1356,7 +1423,7 @@
       document.getElementById('formLogin').style.display = 'none';
       document.getElementById('formRecupero').style.display = 'none';
       document.getElementById('formNuevaClave').style.display = 'block';
-      mostrarMsgLogin('Ingresa tu nueva contraseña para completar la recuperación.', 'success');
+      mostrarMsgLogin('Ingresa tu nueva contraseña personal para completar el cambio.', 'success');
     }
 
     function actualizarEstadoSesion(user) {
@@ -1370,9 +1437,9 @@
 
         const email = user.email || '';
         const nombreCorto = email.split('@')[0].toUpperCase();
-        document.getElementById('userSedeLabel').textContent = nombreCorto || 'CORRIENTES';
+        document.getElementById('userSedeLabel').textContent = nombreCorto || 'OPERADOR';
         document.getElementById('userEmailLabel').textContent = email;
-        document.getElementById('userAvatar').textContent = (nombreCorto || 'C')[0];
+        document.getElementById('userAvatar').textContent = (nombreCorto || 'O')[0];
 
         cargarDatos();
       } else {
@@ -1390,7 +1457,7 @@
       e.preventDefault();
       if (!supabaseClient) return;
 
-      const rawUser = document.getElementById('login_usuario').value.trim();
+      const rawUser = document.getElementById('login_usuario').value.trim().toLowerCase();
       const password = document.getElementById('login_password').value;
       const btn = document.getElementById('btnSubmitLogin');
 
@@ -1398,10 +1465,9 @@
       btn.disabled = true;
       btn.textContent = 'Ingresando...';
 
-      // Si escribe "DELEGACIONCORRIENTES" sin @, usa el correo configurado
       const emailFinal = rawUser.indexOf('@') !== -1
-        ? rawUser.toLowerCase()
-        : CORREO_RECUPERO_DEFAULT;
+        ? rawUser
+        : rawUser + DOMINIO_INSTITUCIONAL;
 
       const { error } = await supabaseClient.auth.signInWithPassword({
         email: emailFinal,
@@ -1412,7 +1478,7 @@
       btn.textContent = 'Iniciar sesión';
 
       if (error) {
-        mostrarMsgLogin('Usuario o contraseña incorrectos.', 'error');
+        mostrarMsgLogin('Correo/usuario o contraseña incorrectos.', 'error');
       } else {
         document.getElementById('login_password').value = '';
       }
@@ -1440,7 +1506,7 @@
       if (error) {
         mostrarMsgLogin('Error al enviar correo: ' + error.message, 'error');
       } else {
-        mostrarMsgLogin('Se envió un enlace de recuperación a ' + email + '. Revisa tu bandeja de entrada.', 'success');
+        mostrarMsgLogin('Se envió un enlace de recuperación a ' + email + '. Revisa tu correo para elegir tu nueva clave.', 'success');
       }
     }
 
@@ -1466,6 +1532,44 @@
         document.getElementById('nueva_password').value = '';
         actualizarEstadoSesion(data && data.user ? data.user : null);
         mostrarAlerta('Contraseña actualizada correctamente.', 'success');
+      }
+    }
+
+    function abrirDrawerClave() {
+      if (!usuarioActual) return;
+      document.getElementById('formCambiarClave').reset();
+      const email = usuarioActual.email || '';
+      document.getElementById('clave_usuario_fijo').value = email.split('@')[0].toUpperCase();
+      document.getElementById('clave_correo_fijo').value = email;
+      document.getElementById('drawerClave').classList.add('open');
+    }
+
+    async function cambiarClaveLogueado(e) {
+      e.preventDefault();
+      if (!supabaseClient || !usuarioActual) return;
+
+      const p1 = document.getElementById('clave_nueva_1').value;
+      const p2 = document.getElementById('clave_nueva_2').value;
+
+      if (p1 !== p2) {
+        mostrarAlerta('Las dos contraseñas no coinciden. Inténtalo de nuevo.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnGuardarClave');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      const { error } = await supabaseClient.auth.updateUser({ password: p1 });
+
+      btn.disabled = false;
+      btn.textContent = 'Actualizar clave ›';
+
+      if (error) {
+        mostrarAlerta('Error al cambiar clave: ' + error.message, 'error');
+      } else {
+        cerrarDrawers();
+        mostrarAlerta('Tu contraseña se actualizó correctamente.', 'success');
       }
     }
 
@@ -1774,6 +1878,7 @@
     function cerrarDrawers() {
       document.getElementById('drawerAfiliado').classList.remove('open');
       document.getElementById('drawerTurno').classList.remove('open');
+      document.getElementById('drawerClave').classList.remove('open');
       document.querySelectorAll('.custom-input-box').forEach(function(b) { b.classList.remove('visible'); });
     }
 
