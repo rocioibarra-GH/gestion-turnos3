@@ -872,7 +872,7 @@
       </div>
 
       <nav class="nav-menu">
-        <div class="nav-item" onclick="cambiarVista('turnos')">
+        <div class="nav-item" onclick="cambiarVista('afiliados')">
           <span class="nav-icon">🏠</span>
           <span class="nav-label">Inicio</span>
         </div>
@@ -884,22 +884,22 @@
         </div>
 
         <div class="nav-section-title">OPERACIÓN</div>
-        <div class="nav-item sub-item active" id="nav-turnos" onclick="cambiarVista('turnos')">
-          <span class="nav-icon">📅</span>
-          <span class="nav-label">Turnos y Solicitudes</span>
-        </div>
-        <div class="nav-item sub-item" id="nav-afiliados" onclick="cambiarVista('afiliados')">
+        <div class="nav-item sub-item active" id="nav-afiliados" onclick="cambiarVista('afiliados')">
           <span class="nav-icon">📋</span>
           <span class="nav-label">BASE DE DATOS</span>
         </div>
-
-        <div class="nav-item" onclick="abrirDrawerTurno()">
-          <span class="nav-icon">➕</span>
-          <span class="nav-label">Asignar Turno</span>
+        <div class="nav-item sub-item" id="nav-turnos" onclick="cambiarVista('turnos')">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">Turnos y Solicitudes</span>
         </div>
+
         <div class="nav-item" onclick="abrirDrawerAfiliado()">
           <span class="nav-icon">👤</span>
           <span class="nav-label">Nuevo Dato</span>
+        </div>
+        <div class="nav-item" onclick="abrirDrawerTurno()">
+          <span class="nav-icon">➕</span>
+          <span class="nav-label">Asignar Turno</span>
         </div>
         <div class="nav-item" onclick="cargarDatos()">
           <span class="nav-icon">🔄</span>
@@ -919,7 +919,7 @@
             <span>›</span>
             <span>Operación</span>
             <span>›</span>
-            <span class="current">Turnos y Solicitudes</span>
+            <span class="current">BASE DE DATOS</span>
           </div>
         </div>
 
@@ -951,10 +951,99 @@
       <main class="content">
         <div id="alertBanner" class="alert-banner"></div>
 
-        <!-- VISTA TURNOS -->
-        <section id="vistaTurnos">
+        <!-- VISTA AFILIADOS / BASE DE DATOS (PRINCIPAL) -->
+        <section id="vistaAfiliados">
           <div class="action-bar">
-            <button type="button" class="btn-pill" onclick="limpiarFiltrosTurnos()">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="limpiarFiltrosAfiliados()">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="abrirDrawerAfiliado()">Agregar ›</button>
+          </div>
+
+          <!-- 6 FILTROS OUTLINED AFILIADOS -->
+          <div class="filters-grid">
+            <div class="outlined-field">
+              <label>Régimen</label>
+              <select id="f_af_regimen" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Siglas</label>
+              <select id="f_af_siglas" onchange="filtrarAfiliados()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Tipo de Gestión</label>
+              <select id="f_af_gestion" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Cuil - Titular</label>
+              <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
+            </div>
+            <div class="outlined-field">
+              <label>Apellido y Nombre</label>
+              <input type="text" id="f_af_nombre" placeholder="Buscar afiliado..." oninput="filtrarAfiliados()" />
+            </div>
+            <div class="outlined-field">
+              <label>Localidad</label>
+              <select id="f_af_localidad" onchange="filtrarAfiliados()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- DATAGRID AFILIADOS -->
+          <div class="grid-card">
+            <div class="grid-toolbar">
+              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
+              <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
+                ⚑
+                <span class="tool-badge" id="badgeTotalAfiliados">0</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="ordenarAfiliados()" title="Ordenar">
+                ☰
+                <span class="tool-badge">1</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="limpiarFiltrosAfiliados()" title="Limpiar filtros">
+                ▼
+                <span class="tool-badge" id="badgeFiltrosAfiliados">0</span>
+              </button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('afiliados')" title="Exportar Base CSV">⤓</button>
+              <div class="toolbar-right-info" id="infoAfiliados">0 registros</div>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
+                    <th>Turno</th>
+                    <th>Editar</th>
+                    <th>Cuil - Titular</th>
+                    <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
+                    <th>Nro Celular</th>
+                    <th>Correo Electrónico</th>
+                    <th>Localidad</th>
+                    <th>Régimen</th>
+                    <th>Siglas</th>
+                    <th>Tipo de Gestión</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAfiliados">
+                  <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA TURNOS -->
+        <section id="vistaTurnos" style="display:none;">
+          <div class="action-bar">
+            <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
             <button type="button" class="btn-pill" onclick="abrirDrawerTurno()">Agregar ›</button>
           </div>
 
@@ -1035,95 +1124,6 @@
                 </thead>
                 <tbody id="tbodyTurnos">
                   <tr><td colspan="14" style="text-align:center; padding:30px; color:#64748b;">Cargando turnos...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <!-- VISTA AFILIADOS / BASE DE DATOS -->
-        <section id="vistaAfiliados" style="display:none;">
-          <div class="action-bar">
-            <button type="button" class="btn-pill" onclick="cambiarVista('turnos')">‹ Regresar</button>
-            <button type="button" class="btn-pill" onclick="abrirDrawerAfiliado()">Agregar ›</button>
-          </div>
-
-          <!-- 6 FILTROS OUTLINED AFILIADOS -->
-          <div class="filters-grid">
-            <div class="outlined-field">
-              <label>Régimen</label>
-              <select id="f_af_regimen" onchange="filtrarAfiliados()">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="outlined-field">
-              <label>Siglas</label>
-              <select id="f_af_siglas" onchange="filtrarAfiliados()">
-                <option value="">Todas</option>
-              </select>
-            </div>
-            <div class="outlined-field">
-              <label>Tipo de Gestión</label>
-              <select id="f_af_gestion" onchange="filtrarAfiliados()">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <div class="outlined-field">
-              <label>Cuil - Titular</label>
-              <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
-            </div>
-            <div class="outlined-field">
-              <label>Apellido y Nombre</label>
-              <input type="text" id="f_af_nombre" placeholder="Buscar afiliado..." oninput="filtrarAfiliados()" />
-            </div>
-            <div class="outlined-field">
-              <label>Localidad</label>
-              <select id="f_af_localidad" onchange="filtrarAfiliados()">
-                <option value="">Todas</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- DATAGRID AFILIADOS -->
-          <div class="grid-card">
-            <div class="grid-toolbar">
-              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
-              <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
-              <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
-                ⚑
-                <span class="tool-badge" id="badgeTotalAfiliados">0</span>
-              </button>
-              <button type="button" class="tool-btn" onclick="ordenarAfiliados()" title="Ordenar">
-                ☰
-                <span class="tool-badge">1</span>
-              </button>
-              <button type="button" class="tool-btn" onclick="limpiarFiltrosAfiliados()" title="Limpiar filtros">
-                ▼
-                <span class="tool-badge" id="badgeFiltrosAfiliados">0</span>
-              </button>
-              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('afiliados')" title="Exportar Base CSV">⤓</button>
-              <div class="toolbar-right-info" id="infoAfiliados">0 registros</div>
-            </div>
-
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
-                    <th>Turno</th>
-                    <th>Editar</th>
-                    <th>Cuil - Titular</th>
-                    <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
-                    <th>Nro Celular</th>
-                    <th>Correo Electrónico</th>
-                    <th>Localidad</th>
-                    <th>Régimen</th>
-                    <th>Siglas</th>
-                    <th>Tipo de Gestión</th>
-                  </tr>
-                </thead>
-                <tbody id="tbodyAfiliados">
-                  <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1313,7 +1313,6 @@
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
 
-    // LISTAS ESTÁTICAS EXACTAS SEGÚN LOS ENUM DE SUPABASE
     const OPCIONES_BASE = {
       REGIMEN: [
         'MONOTRIBUTO',
@@ -1496,6 +1495,7 @@
         document.getElementById('userEmailLabel').textContent = email;
         document.getElementById('userAvatar').textContent = (nombreCorto || 'O')[0];
 
+        cambiarVista('afiliados');
         cargarDatos();
       } else {
         appContainer.classList.add('hidden');
@@ -1692,14 +1692,12 @@
     }
 
     function actualizarDesplegables() {
-      // Formularios con listas cerradas exactas
       poblarSelect('af_regimen', OPCIONES_BASE.REGIMEN, '-- Seleccionar Régimen --');
       poblarSelect('af_localidad', OPCIONES_BASE.LOCALIDAD, '-- Seleccionar Localidad --');
       poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
       poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
 
-      // Filtros de tablas
       poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
       poblarSelect('f_af_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
@@ -1708,7 +1706,7 @@
       poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      // Desplegable SIGLAS vinculado a la tabla obras_sociales de Supabase
+      // Desplegable SIGLAS desde la tabla obras_sociales de Supabase
       const selSiglasForm = document.getElementById('af_siglas');
       if (selSiglasForm) {
         const previo = selSiglasForm.value;
@@ -1744,7 +1742,6 @@
 
       poblarSelect('f_af_siglas', siglasUnicas, 'Todas');
 
-      // Selector de CUIL de afiliados para turnos
       const selCuil = document.getElementById('tu_cuil');
       if (selCuil) {
         selCuil.innerHTML = '<option value="">-- Seleccionar Afiliado por CUIL --</option>';
@@ -1776,13 +1773,19 @@
 
         const resOs = await supabaseClient
           .from('obras_sociales')
-          .select('sigla, nombre, codigo_rnas, habilita_opcion')
-          .order('sigla', { ascending: true });
-        if (!resOs.error && resOs.data) {
+          .select('sigla, nombre')
+          .order('sigla', { ascending: true })
+          .range(0, 999);
+
+        if (resOs.error) {
+          mostrarAlerta('Aviso obras_sociales: ' + resOs.error.message, 'error');
+        } else if (resOs.data && resOs.data.length > 0) {
           listaObrasSociales = resOs.data;
+        } else {
+          mostrarAlerta('La tabla obras_sociales devolvió 0 filas. Verifica la política SELECT en Supabase.', 'error');
         }
 
-        setEstadoConexion('ok', 'Conectado');
+        setEstadoConexion('ok', 'Conectado (' + listaObrasSociales.length + ' OS)');
         actualizarDesplegables();
         filtrarTurnos();
         filtrarAfiliados();
