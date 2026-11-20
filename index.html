@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LATIOS - Gestión OSSACRA | Afiliados y Turnos</title>
+  <title>ABM CORRIENTES | Gestión de Afiliados y Turnos</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -32,9 +32,151 @@
       margin: 0;
       background-color: var(--bg-page);
       color: var(--text-main);
-      display: flex;
       min-height: 100vh;
       overflow-x: hidden;
+    }
+
+    /* ================= PANTALLA DE LOGIN INICIAL ================= */
+    .login-screen {
+      position: fixed;
+      inset: 0;
+      background-color: #f4f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+    .login-screen.hidden {
+      display: none;
+    }
+    .login-card {
+      background: #ffffff;
+      width: 440px;
+      max-width: 100%;
+      border-radius: 14px;
+      padding: 38px 34px 34px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e8edf3;
+    }
+    .login-brand-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-brand-title {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--nav-blue);
+      letter-spacing: 0.8px;
+    }
+    .login-brand-sub {
+      margin: 6px 0 0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .login-outlined-group {
+      position: relative;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      margin-bottom: 20px;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .login-outlined-group:focus-within {
+      border-color: var(--btn-blue);
+      box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+    }
+    .login-outlined-group label {
+      position: absolute;
+      top: -9px;
+      left: 12px;
+      background: #ffffff;
+      padding: 0 5px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #64748b;
+      pointer-events: none;
+    }
+    .login-outlined-group:focus-within label {
+      color: var(--btn-blue);
+    }
+    .login-field-icon {
+      color: #64748b;
+      font-size: 1.05rem;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      user-select: none;
+    }
+    .login-outlined-group input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 0.92rem;
+      color: #1e293b;
+      background: transparent;
+      height: 100%;
+    }
+    .toggle-pass-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      padding: 4px 6px;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+    }
+    .toggle-pass-btn:hover {
+      color: #1e293b;
+    }
+    .login-submit-btn {
+      width: 100%;
+      height: 44px;
+      background-color: var(--btn-blue);
+      color: #ffffff;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.15s;
+    }
+    .login-submit-btn:hover {
+      background-color: var(--btn-blue-hover);
+    }
+    .login-submit-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    .login-error-box {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      padding: 9px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ================= APLICACIÓN PRINCIPAL ================= */
+    .app-container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+    }
+    .app-container.hidden {
+      display: none;
     }
 
     /* SIDEBAR */
@@ -76,7 +218,7 @@
       justify-content: center;
       font-weight: 800;
       color: #08345c;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       flex-shrink: 0;
     }
     .brand-text {
@@ -86,8 +228,8 @@
     }
     .brand-title {
       font-weight: 700;
-      font-size: 1rem;
-      letter-spacing: 0.5px;
+      font-size: 0.95rem;
+      letter-spacing: 0.4px;
       line-height: 1.1;
     }
     .brand-sub {
@@ -229,9 +371,9 @@
     .status-dot.error {
       background: #ef4444;
     }
-    .btn-auth {
-      background: rgba(255, 255, 255, 0.16);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.25);
+      border: 1px solid rgba(252, 165, 165, 0.5);
       color: #fff;
       padding: 5px 12px;
       border-radius: 6px;
@@ -240,15 +382,8 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-auth:hover {
-      background: rgba(255, 255, 255, 0.28);
-    }
-    .btn-auth.logged-in {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: rgba(252, 165, 165, 0.5);
-    }
-    .btn-auth.logged-in:hover {
-      background: rgba(239, 68, 68, 0.45);
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.48);
     }
     .user-profile {
       display: flex;
@@ -279,7 +414,7 @@
     .user-role {
       font-size: 0.7rem;
       color: #b0cde8;
-      max-width: 150px;
+      max-width: 160px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -289,35 +424,6 @@
     .content {
       padding: 20px 24px;
       flex: 1;
-    }
-
-    /* AUTH NOTICE BANNER */
-    .readonly-notice {
-      background: #fef3c7;
-      border: 1px solid #fcd34d;
-      color: #92400e;
-      padding: 9px 14px;
-      border-radius: 6px;
-      margin-bottom: 14px;
-      font-size: 0.83rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .readonly-notice button {
-      background: #d97706;
-      color: #fff;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 5px;
-      font-weight: 600;
-      font-size: 0.78rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .readonly-notice button:hover {
-      background: #b45309;
     }
 
     /* ACTION BUTTONS ROW */
@@ -341,13 +447,10 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-      transition: background 0.15s, opacity 0.15s;
+      transition: background 0.15s;
     }
     .btn-pill:hover {
       background-color: var(--btn-blue-hover);
-    }
-    .btn-pill.locked {
-      opacity: 0.6;
     }
 
     /* OUTLINED FLOATING FILTERS */
@@ -646,364 +749,309 @@
       font-weight: 600;
       cursor: pointer;
     }
-
-    /* MODAL LOGIN */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 60;
-      padding: 16px;
-    }
-    .modal-overlay.open {
-      display: flex;
-    }
-    .modal-card {
-      background: #fff;
-      width: 380px;
-      max-width: 100%;
-      border-radius: 10px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
-      overflow: hidden;
-    }
-    .modal-header {
-      background: var(--nav-blue);
-      color: #fff;
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .modal-header h3 {
-      margin: 0;
-      font-size: 1rem;
-    }
-    .modal-body {
-      padding: 20px;
-    }
-    .modal-error {
-      background: #fee2e2;
-      color: #991b1b;
-      padding: 8px 10px;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      margin-bottom: 12px;
-      display: none;
-    }
-    .modal-footer {
-      padding: 12px 20px;
-      background: #f8fafc;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="brand-left">
-        <div class="brand-logo">L</div>
-        <div class="brand-text">
-          <span class="brand-title">LATIOS</span>
-          <span class="brand-sub">Gestión OSSACRA</span>
-        </div>
+  <!-- PANTALLA DE ACCESO INICIAL (ABM CORRIENTES) -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-brand-header">
+        <h1 class="login-brand-title">ABM CORRIENTES</h1>
+        <p class="login-brand-sub">Gestión de Afiliados y Turnos</p>
       </div>
-      <button type="button" class="collapse-btn" onclick="toggleSidebar()" title="Contraer menú">«</button>
+
+      <div id="loginError" class="login-error-box"></div>
+
+      <form onsubmit="iniciarSesion(event)">
+        <div class="login-outlined-group">
+          <label for="login_usuario">Nombre de usuario</label>
+          <span class="login-field-icon">👤</span>
+          <input type="text" id="login_usuario" required placeholder="DELEGACIONCORRIENTES" autocomplete="username" />
+        </div>
+
+        <div class="login-outlined-group">
+          <label for="login_password">Contraseña</label>
+          <span class="login-field-icon">🔑</span>
+          <input type="password" id="login_password" required placeholder="••••••••••••••" autocomplete="current-password" />
+          <button type="button" class="toggle-pass-btn" onclick="togglePassword()" title="Mostrar / Ocultar contraseña">👁</button>
+        </div>
+
+        <button type="submit" class="login-submit-btn" id="btnSubmitLogin">Iniciar sesión</button>
+      </form>
     </div>
-
-    <nav class="nav-menu">
-      <div class="nav-item" onclick="cambiarVista('turnos')">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Inicio</span>
-      </div>
-
-      <div class="nav-section-title">MÓDULOS</div>
-      <div class="nav-item" onclick="cambiarVista('afiliados')">
-        <span class="nav-icon">👥</span>
-        <span class="nav-label">Afiliación</span>
-      </div>
-
-      <div class="nav-section-title">OPERACIÓN</div>
-      <div class="nav-item sub-item active" id="nav-turnos" onclick="cambiarVista('turnos')">
-        <span class="nav-icon">📅</span>
-        <span class="nav-label">Turnos y Solicitudes</span>
-      </div>
-      <div class="nav-item sub-item" id="nav-afiliados" onclick="cambiarVista('afiliados')">
-        <span class="nav-icon">📋</span>
-        <span class="nav-label">BASE DE DATOS</span>
-      </div>
-
-      <div class="nav-item" onclick="abrirDrawerTurno()">
-        <span class="nav-icon">➕</span>
-        <span class="nav-label">Asignar Turno</span>
-      </div>
-      <div class="nav-item" onclick="abrirDrawerAfiliado()">
-        <span class="nav-icon">👤</span>
-        <span class="nav-label">Nuevo Dato</span>
-      </div>
-      <div class="nav-item" onclick="cargarDatos()">
-        <span class="nav-icon">🔄</span>
-        <span class="nav-label">Sincronizar Base</span>
-      </div>
-    </nav>
-  </aside>
-
-  <!-- MAIN WRAPPER -->
-  <div class="main-wrapper">
-    <!-- TOPBAR -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <button type="button" class="hamburger" onclick="toggleSidebar()">☰</button>
-        <div class="breadcrumb" id="breadcrumb">
-          <span>Inicio</span>
-          <span>›</span>
-          <span>Operación</span>
-          <span>›</span>
-          <span class="current">Turnos y Solicitudes</span>
-        </div>
-      </div>
-
-      <div class="topbar-right">
-        <div class="status-pill" id="connStatus">
-          <span class="status-dot" id="connDot"></span>
-          <span id="connText">Iniciando...</span>
-        </div>
-
-        <button type="button" class="btn-auth" id="btnAuthAction" onclick="manejarBotonAuth()">
-          🔒 Iniciar Sesión
-        </button>
-
-        <div class="user-profile">
-          <div class="user-avatar" id="userAvatar">C</div>
-          <div class="user-info">
-            <span class="user-sede">CORRIENTES</span>
-            <span class="user-role" id="userEmailLabel">Solo lectura</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- CONTENT -->
-    <main class="content">
-      <div id="readonlyNotice" class="readonly-notice">
-        <span>🔒 <strong>Modo solo lectura:</strong> Inicia sesión con tu cuenta de operador para agregar o modificar afiliados y turnos.</span>
-        <button type="button" onclick="abrirModalLogin()">Iniciar Sesión</button>
-      </div>
-
-      <div id="alertBanner" class="alert-banner"></div>
-
-      <!-- VISTA TURNOS -->
-      <section id="vistaTurnos">
-        <div class="action-bar">
-          <button type="button" class="btn-pill" onclick="limpiarFiltrosTurnos()">‹ Regresar</button>
-          <button type="button" class="btn-pill requiere-auth" onclick="abrirDrawerTurno()">Agregar ›</button>
-        </div>
-
-        <!-- 6 FILTROS OUTLINED -->
-        <div class="filters-grid">
-          <div class="outlined-field">
-            <label>Estado</label>
-            <select id="f_tu_estado" onchange="filtrarTurnos()">
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div class="outlined-field">
-            <label>Operador</label>
-            <select id="f_tu_operador" onchange="filtrarTurnos()">
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div class="outlined-field">
-            <label>Fecha</label>
-            <input type="date" id="f_tu_fecha" onchange="filtrarTurnos()" />
-          </div>
-          <div class="outlined-field">
-            <label>Cuil - Titular</label>
-            <input type="text" id="f_tu_cuil" placeholder="Ej: 20277150671" oninput="filtrarTurnos()" />
-          </div>
-          <div class="outlined-field">
-            <label>Apellido y Nombre</label>
-            <input type="text" id="f_tu_nombre" placeholder="Buscar titular..." oninput="filtrarTurnos()" />
-          </div>
-          <div class="outlined-field">
-            <label>Localidad</label>
-            <select id="f_tu_localidad" onchange="filtrarTurnos()">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- DATAGRID TURNOS -->
-        <div class="grid-card">
-          <div class="grid-toolbar">
-            <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
-            <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
-            <button type="button" class="tool-btn" onclick="abrirDrawerTurno()" title="Nuevo Turno">
-              ⚑
-              <span class="tool-badge" id="badgeTotalTurnos">0</span>
-            </button>
-            <button type="button" class="tool-btn" onclick="ordenarTurnos()" title="Ordenar registros">
-              ☰
-              <span class="tool-badge">1</span>
-            </button>
-            <button type="button" class="tool-btn" onclick="limpiarFiltrosTurnos()" title="Limpiar filtros activos">
-              ▼
-              <span class="tool-badge" id="badgeFiltrosTurnos">0</span>
-            </button>
-            <button type="button" class="tool-btn active-tool" onclick="exportarCSV('turnos')" title="Exportar a Excel / CSV">⤓</button>
-            <div class="toolbar-right-info" id="infoTurnos">0 registros</div>
-          </div>
-
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-tu')" /></th>
-                  <th>Acceso</th>
-                  <th>Fecha</th>
-                  <th>Hora</th>
-                  <th>Estado</th>
-                  <th>Afiliado Cargado</th>
-                  <th>ID</th>
-                  <th>Cuil - Titular</th>
-                  <th onclick="ordenarTurnos()">1 ▴ Apellido y Nombre</th>
-                  <th>Localidad</th>
-                  <th>Régimen</th>
-                  <th>Siglas</th>
-                  <th>Tipo de Gestión</th>
-                  <th>Operador</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyTurnos">
-                <tr><td colspan="14" style="text-align:center; padding:30px; color:#64748b;">Iniciando conexión con Supabase...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- VISTA AFILIADOS / BASE DE DATOS -->
-      <section id="vistaAfiliados" style="display:none;">
-        <div class="action-bar">
-          <button type="button" class="btn-pill" onclick="cambiarVista('turnos')">‹ Regresar</button>
-          <button type="button" class="btn-pill requiere-auth" onclick="abrirDrawerAfiliado()">Agregar ›</button>
-        </div>
-
-        <!-- 6 FILTROS OUTLINED AFILIADOS -->
-        <div class="filters-grid">
-          <div class="outlined-field">
-            <label>Régimen</label>
-            <select id="f_af_regimen" onchange="filtrarAfiliados()">
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div class="outlined-field">
-            <label>Siglas</label>
-            <select id="f_af_siglas" onchange="filtrarAfiliados()">
-              <option value="">Todas</option>
-            </select>
-          </div>
-          <div class="outlined-field">
-            <label>Tipo de Gestión</label>
-            <select id="f_af_gestion" onchange="filtrarAfiliados()">
-              <option value="">Todos</option>
-            </select>
-          </div>
-          <div class="outlined-field">
-            <label>Cuil - Titular</label>
-            <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
-          </div>
-          <div class="outlined-field">
-            <label>Apellido y Nombre</label>
-            <input type="text" id="f_af_nombre" placeholder="Buscar afiliado..." oninput="filtrarAfiliados()" />
-          </div>
-          <div class="outlined-field">
-            <label>Localidad</label>
-            <select id="f_af_localidad" onchange="filtrarAfiliados()">
-              <option value="">Todas</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- DATAGRID AFILIADOS -->
-        <div class="grid-card">
-          <div class="grid-toolbar">
-            <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
-            <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
-            <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
-              ⚑
-              <span class="tool-badge" id="badgeTotalAfiliados">0</span>
-            </button>
-            <button type="button" class="tool-btn" onclick="ordenarAfiliados()" title="Ordenar">
-              ☰
-              <span class="tool-badge">1</span>
-            </button>
-            <button type="button" class="tool-btn" onclick="limpiarFiltrosAfiliados()" title="Limpiar filtros">
-              ▼
-              <span class="tool-badge" id="badgeFiltrosAfiliados">0</span>
-            </button>
-            <button type="button" class="tool-btn active-tool" onclick="exportarCSV('afiliados')" title="Exportar Base CSV">⤓</button>
-            <div class="toolbar-right-info" id="infoAfiliados">0 registros</div>
-          </div>
-
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
-                  <th>Turno</th>
-                  <th>Editar</th>
-                  <th>Cuil - Titular</th>
-                  <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
-                  <th>Nro Celular</th>
-                  <th>Correo Electrónico</th>
-                  <th>Localidad</th>
-                  <th>Régimen</th>
-                  <th>Siglas</th>
-                  <th>Tipo de Gestión</th>
-                </tr>
-              </thead>
-              <tbody id="tbodyAfiliados">
-                <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-    </main>
   </div>
 
-  <!-- MODAL: INICIAR SESIÓN -->
-  <div class="modal-overlay" id="modalLogin">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3>Iniciar Sesión - Operador</h3>
-        <button type="button" class="drawer-close" onclick="cerrarModalLogin()">×</button>
+  <!-- APLICACIÓN PRINCIPAL (OCULTA HASTA INICIAR SESIÓN) -->
+  <div class="app-container hidden" id="appContainer">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-left">
+          <div class="brand-logo">ABM</div>
+          <div class="brand-text">
+            <span class="brand-title">ABM CORRIENTES</span>
+            <span class="brand-sub">Afiliados y Turnos</span>
+          </div>
+        </div>
+        <button type="button" class="collapse-btn" onclick="toggleSidebar()" title="Contraer menú">«</button>
       </div>
-      <form onsubmit="iniciarSesion(event)">
-        <div class="modal-body">
-          <div id="loginError" class="modal-error"></div>
-          <div class="form-field">
-            <label>Correo Electrónico *</label>
-            <input type="email" id="login_email" required placeholder="operador@ossacra.org.ar" />
-          </div>
-          <div class="form-field" style="margin-bottom:0;">
-            <label>Contraseña *</label>
-            <input type="password" id="login_password" required placeholder="••••••••" />
+
+      <nav class="nav-menu">
+        <div class="nav-item" onclick="cambiarVista('turnos')">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-label">Inicio</span>
+        </div>
+
+        <div class="nav-section-title">MÓDULOS</div>
+        <div class="nav-item" onclick="cambiarVista('afiliados')">
+          <span class="nav-icon">👥</span>
+          <span class="nav-label">Afiliación</span>
+        </div>
+
+        <div class="nav-section-title">OPERACIÓN</div>
+        <div class="nav-item sub-item active" id="nav-turnos" onclick="cambiarVista('turnos')">
+          <span class="nav-icon">📅</span>
+          <span class="nav-label">Turnos y Solicitudes</span>
+        </div>
+        <div class="nav-item sub-item" id="nav-afiliados" onclick="cambiarVista('afiliados')">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">BASE DE DATOS</span>
+        </div>
+
+        <div class="nav-item" onclick="abrirDrawerTurno()">
+          <span class="nav-icon">➕</span>
+          <span class="nav-label">Asignar Turno</span>
+        </div>
+        <div class="nav-item" onclick="abrirDrawerAfiliado()">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Nuevo Dato</span>
+        </div>
+        <div class="nav-item" onclick="cargarDatos()">
+          <span class="nav-icon">🔄</span>
+          <span class="nav-label">Sincronizar Base</span>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="main-wrapper">
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="hamburger" onclick="toggleSidebar()">☰</button>
+          <div class="breadcrumb" id="breadcrumb">
+            <span>Inicio</span>
+            <span>›</span>
+            <span>Operación</span>
+            <span>›</span>
+            <span class="current">Turnos y Solicitudes</span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="cerrarModalLogin()">Cancelar</button>
-          <button type="submit" class="btn-pill" id="btnSubmitLogin">Ingresar ›</button>
+
+        <div class="topbar-right">
+          <div class="status-pill" id="connStatus">
+            <span class="status-dot" id="connDot"></span>
+            <span id="connText">Iniciando...</span>
+          </div>
+
+          <div class="user-profile">
+            <div class="user-avatar" id="userAvatar">D</div>
+            <div class="user-info">
+              <span class="user-sede" id="userSedeLabel">DELEGACIONCORRIENTES</span>
+              <span class="user-role" id="userEmailLabel">Operador activo</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-logout" onclick="cerrarSesion()">
+            Cerrar Sesión
+          </button>
         </div>
-      </form>
+      </header>
+
+      <!-- CONTENT -->
+      <main class="content">
+        <div id="alertBanner" class="alert-banner"></div>
+
+        <!-- VISTA TURNOS -->
+        <section id="vistaTurnos">
+          <div class="action-bar">
+            <button type="button" class="btn-pill" onclick="limpiarFiltrosTurnos()">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="abrirDrawerTurno()">Agregar ›</button>
+          </div>
+
+          <!-- 6 FILTROS OUTLINED -->
+          <div class="filters-grid">
+            <div class="outlined-field">
+              <label>Estado</label>
+              <select id="f_tu_estado" onchange="filtrarTurnos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Operador</label>
+              <select id="f_tu_operador" onchange="filtrarTurnos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Fecha</label>
+              <input type="date" id="f_tu_fecha" onchange="filtrarTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Cuil - Titular</label>
+              <input type="text" id="f_tu_cuil" placeholder="Ej: 20277150671" oninput="filtrarTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Apellido y Nombre</label>
+              <input type="text" id="f_tu_nombre" placeholder="Buscar titular..." oninput="filtrarTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Localidad</label>
+              <select id="f_tu_localidad" onchange="filtrarTurnos()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- DATAGRID TURNOS -->
+          <div class="grid-card">
+            <div class="grid-toolbar">
+              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
+              <button type="button" class="tool-btn" onclick="abrirDrawerTurno()" title="Nuevo Turno">
+                ⚑
+                <span class="tool-badge" id="badgeTotalTurnos">0</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="ordenarTurnos()" title="Ordenar registros">
+                ☰
+                <span class="tool-badge">1</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="limpiarFiltrosTurnos()" title="Limpiar filtros activos">
+                ▼
+                <span class="tool-badge" id="badgeFiltrosTurnos">0</span>
+              </button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('turnos')" title="Exportar a Excel / CSV">⤓</button>
+              <div class="toolbar-right-info" id="infoTurnos">0 registros</div>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-tu')" /></th>
+                    <th>Acceso</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                    <th>Afiliado Cargado</th>
+                    <th>ID</th>
+                    <th>Cuil - Titular</th>
+                    <th onclick="ordenarTurnos()">1 ▴ Apellido y Nombre</th>
+                    <th>Localidad</th>
+                    <th>Régimen</th>
+                    <th>Siglas</th>
+                    <th>Tipo de Gestión</th>
+                    <th>Operador</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyTurnos">
+                  <tr><td colspan="14" style="text-align:center; padding:30px; color:#64748b;">Cargando turnos...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA AFILIADOS / BASE DE DATOS -->
+        <section id="vistaAfiliados" style="display:none;">
+          <div class="action-bar">
+            <button type="button" class="btn-pill" onclick="cambiarVista('turnos')">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="abrirDrawerAfiliado()">Agregar ›</button>
+          </div>
+
+          <!-- 6 FILTROS OUTLINED AFILIADOS -->
+          <div class="filters-grid">
+            <div class="outlined-field">
+              <label>Régimen</label>
+              <select id="f_af_regimen" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Siglas</label>
+              <select id="f_af_siglas" onchange="filtrarAfiliados()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Tipo de Gestión</label>
+              <select id="f_af_gestion" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Cuil - Titular</label>
+              <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
+            </div>
+            <div class="outlined-field">
+              <label>Apellido y Nombre</label>
+              <input type="text" id="f_af_nombre" placeholder="Buscar afiliado..." oninput="filtrarAfiliados()" />
+            </div>
+            <div class="outlined-field">
+              <label>Localidad</label>
+              <select id="f_af_localidad" onchange="filtrarAfiliados()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- DATAGRID AFILIADOS -->
+          <div class="grid-card">
+            <div class="grid-toolbar">
+              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Turnos">▥</button>
+              <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
+                ⚑
+                <span class="tool-badge" id="badgeTotalAfiliados">0</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="ordenarAfiliados()" title="Ordenar">
+                ☰
+                <span class="tool-badge">1</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="limpiarFiltrosAfiliados()" title="Limpiar filtros">
+                ▼
+                <span class="tool-badge" id="badgeFiltrosAfiliados">0</span>
+              </button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('afiliados')" title="Exportar Base CSV">⤓</button>
+              <div class="toolbar-right-info" id="infoAfiliados">0 registros</div>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-af')" /></th>
+                    <th>Turno</th>
+                    <th>Editar</th>
+                    <th>Cuil - Titular</th>
+                    <th onclick="ordenarAfiliados()">1 ▴ Apellido y Nombre</th>
+                    <th>Nro Celular</th>
+                    <th>Correo Electrónico</th>
+                    <th>Localidad</th>
+                    <th>Régimen</th>
+                    <th>Siglas</th>
+                    <th>Tipo de Gestión</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAfiliados">
+                  <tr><td colspan="11" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
@@ -1153,6 +1201,8 @@
   <script>
     const SUPABASE_URL = 'https://zinydngwvihnsdfgzpoe.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_oQ_ZTzI1gLCFtbT_Gt5w6A_gjtH2cjI';
+    // Dominio interno para permitir ingresar solo con nombre de usuario (ej: DELEGACIONCORRIENTES)
+    const DOMINIO_INTERNO = '@ossacra.local';
 
     let supabaseClient = null;
     let usuarioActual = null;
@@ -1175,26 +1225,19 @@
 
       try {
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-          setEstadoConexion('error', 'Sin librería Supabase (revisa internet)');
-          mostrarAlerta('No se pudo cargar la librería de Supabase desde internet. Verifica tu conexión.', 'error');
+          mostrarErrorLogin('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
           return;
         }
         supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Verificar si ya existe una sesión activa
         const { data } = await supabaseClient.auth.getSession();
         actualizarEstadoSesion(data && data.session ? data.session.user : null);
 
-        // Escuchar cambios de sesión (login / logout)
         supabaseClient.auth.onAuthStateChange(function(_event, session) {
           actualizarEstadoSesion(session ? session.user : null);
-          cargarDatos();
         });
-
-        cargarDatos();
       } catch (e) {
-        setEstadoConexion('error', 'Error de inicio');
-        mostrarAlerta('Error al iniciar cliente Supabase: ' + e.message, 'error');
+        mostrarErrorLogin('Error al iniciar sistema: ' + e.message);
       }
     }
 
@@ -1204,64 +1247,49 @@
       iniciarApp();
     }
 
-    /* GESTIÓN DE SESIÓN Y PERMISOS */
+    function togglePassword() {
+      const inp = document.getElementById('login_password');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function mostrarErrorLogin(msg) {
+      const errBox = document.getElementById('loginError');
+      if (!errBox) return;
+      errBox.textContent = msg;
+      errBox.style.display = 'block';
+    }
+
     function actualizarEstadoSesion(user) {
       usuarioActual = user;
-      const btnAuth = document.getElementById('btnAuthAction');
-      const emailLabel = document.getElementById('userEmailLabel');
-      const avatar = document.getElementById('userAvatar');
-      const notice = document.getElementById('readonlyNotice');
-      const botonesProtegidos = document.querySelectorAll('.requiere-auth');
+      const loginScreen = document.getElementById('loginScreen');
+      const appContainer = document.getElementById('appContainer');
 
       if (user) {
-        btnAuth.textContent = 'Cerrar Sesión';
-        btnAuth.classList.add('logged-in');
-        emailLabel.textContent = user.email || 'Operador activo';
-        avatar.textContent = (user.email || 'O')[0].toUpperCase();
-        notice.style.display = 'none';
-        botonesProtegidos.forEach(function(b) { b.classList.remove('locked'); });
+        loginScreen.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+
+        const email = user.email || '';
+        const nombreCorto = email.split('@')[0].toUpperCase();
+        document.getElementById('userSedeLabel').textContent = nombreCorto || 'CORRIENTES';
+        document.getElementById('userEmailLabel').textContent = email;
+        document.getElementById('userAvatar').textContent = (nombreCorto || 'C')[0];
+
+        cargarDatos();
       } else {
-        btnAuth.textContent = '🔒 Iniciar Sesión';
-        btnAuth.classList.remove('logged-in');
-        emailLabel.textContent = 'Solo lectura';
-        avatar.textContent = 'C';
-        notice.style.display = 'flex';
-        botonesProtegidos.forEach(function(b) { b.classList.add('locked'); });
+        appContainer.classList.add('hidden');
+        loginScreen.classList.remove('hidden');
+        setTimeout(function() {
+          const inp = document.getElementById('login_usuario');
+          if (inp) inp.focus();
+        }, 50);
       }
-    }
-
-    function verificarPermisoEscritura() {
-      if (!usuarioActual) {
-        mostrarAlerta('Debes iniciar sesión como operador para agregar o modificar registros.', 'error');
-        abrirModalLogin();
-        return false;
-      }
-      return true;
-    }
-
-    function manejarBotonAuth() {
-      if (usuarioActual) {
-        cerrarSesion();
-      } else {
-        abrirModalLogin();
-      }
-    }
-
-    function abrirModalLogin() {
-      document.getElementById('loginError').style.display = 'none';
-      document.getElementById('modalLogin').classList.add('open');
-      setTimeout(function() { document.getElementById('login_email').focus(); }, 50);
-    }
-
-    function cerrarModalLogin() {
-      document.getElementById('modalLogin').classList.remove('open');
     }
 
     async function iniciarSesion(e) {
       e.preventDefault();
       if (!supabaseClient) return;
 
-      const email = document.getElementById('login_email').value.trim();
+      const rawUser = document.getElementById('login_usuario').value.trim();
       const password = document.getElementById('login_password').value;
       const errBox = document.getElementById('loginError');
       const btn = document.getElementById('btnSubmitLogin');
@@ -1270,24 +1298,31 @@
       btn.disabled = true;
       btn.textContent = 'Ingresando...';
 
-      const { error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+      // Si el usuario escribe solo "DELEGACIONCORRIENTES", le agrega @ossacra.local automáticamente.
+      // Si escribe un correo completo (con @), lo usa tal cual.
+      const emailFinal = rawUser.indexOf('@') !== -1
+        ? rawUser.toLowerCase()
+        : rawUser.toLowerCase() + DOMINIO_INTERNO;
+
+      const { error } = await supabaseClient.auth.signInWithPassword({
+        email: emailFinal,
+        password: password
+      });
 
       btn.disabled = false;
-      btn.textContent = 'Ingresar ›';
+      btn.textContent = 'Iniciar sesión';
 
       if (error) {
-        errBox.textContent = 'Error de acceso: ' + error.message;
-        errBox.style.display = 'block';
+        mostrarErrorLogin('Usuario o contraseña incorrectos.');
       } else {
-        cerrarModalLogin();
-        mostrarAlerta('Sesión iniciada correctamente como ' + email, 'success');
+        document.getElementById('login_password').value = '';
       }
     }
 
     async function cerrarSesion() {
       if (!supabaseClient) return;
+      cerrarDrawers();
       await supabaseClient.auth.signOut();
-      mostrarAlerta('Sesión cerrada. Modo solo lectura activado.', 'success');
     }
 
     function setEstadoConexion(estado, texto) {
@@ -1410,10 +1445,7 @@
     }
 
     async function cargarDatos() {
-      if (!supabaseClient) {
-        mostrarAlerta('Cliente Supabase no disponible.', 'error');
-        return;
-      }
+      if (!supabaseClient || !usuarioActual) return;
 
       setEstadoConexion('', 'Conectando...');
 
@@ -1596,7 +1628,7 @@
     }
 
     function abrirDrawerAfiliado() {
-      if (!verificarPermisoEscritura()) return;
+      if (!usuarioActual) return;
       document.getElementById('formAfiliado').reset();
       document.getElementById('af_modo_edicion').value = 'false';
       document.getElementById('af_cuil').readOnly = false;
@@ -1623,7 +1655,7 @@
     }
 
     function editarAfiliadoPorCuil(cuil) {
-      if (!verificarPermisoEscritura()) return;
+      if (!usuarioActual) return;
       const af = listaAfiliados.find(function(item) { return item.CUIL === cuil; });
       if (!af) return;
       abrirDrawerAfiliado();
@@ -1642,7 +1674,7 @@
     }
 
     function abrirDrawerTurno(cuilPreseleccionado) {
-      if (!verificarPermisoEscritura()) return;
+      if (!usuarioActual) return;
       document.getElementById('formTurno').reset();
       document.getElementById('tu_id').value = '';
       if (cuilPreseleccionado) {
@@ -1652,7 +1684,7 @@
     }
 
     function editarTurnoPorId(id) {
-      if (!verificarPermisoEscritura()) return;
+      if (!usuarioActual) return;
       const t = listaTurnos.find(function(item) { return item.id === id; });
       if (!t) return;
       abrirDrawerTurno(t.CUIL);
@@ -1665,11 +1697,7 @@
 
     async function guardarAfiliado(e) {
       e.preventDefault();
-      if (!supabaseClient) {
-        mostrarAlerta('No hay conexión activa con Supabase.', 'error');
-        return;
-      }
-      if (!verificarPermisoEscritura()) return;
+      if (!supabaseClient || !usuarioActual) return;
 
       const esEdicion = document.getElementById('af_modo_edicion').value === 'true';
       const cuil = document.getElementById('af_cuil').value.trim();
@@ -1708,11 +1736,7 @@
 
     async function guardarTurno(e) {
       e.preventDefault();
-      if (!supabaseClient) {
-        mostrarAlerta('No hay conexión activa con Supabase.', 'error');
-        return;
-      }
-      if (!verificarPermisoEscritura()) return;
+      if (!supabaseClient || !usuarioActual) return;
 
       const idTurno = document.getElementById('tu_id').value;
       const horaRaw = document.getElementById('tu_hora').value;
@@ -1766,7 +1790,7 @@
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'latios_' + tipo + '_' + new Date().toISOString().slice(0, 10) + '.csv';
+      link.download = 'abm_corrientes_' + tipo + '_' + new Date().toISOString().slice(0, 10) + '.csv';
       link.click();
     }
   </script>
