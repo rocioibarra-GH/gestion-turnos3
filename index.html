@@ -770,13 +770,6 @@
       border-color: var(--btn-blue);
       box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
     }
-    .custom-input-box {
-      margin-top: 6px;
-      display: none;
-    }
-    .custom-input-box.visible {
-      display: block;
-    }
     .drawer-footer {
       padding: 14px 20px;
       border-top: 1px solid var(--border);
@@ -1214,45 +1207,33 @@
           <!-- DESPLEGABLE REGIMEN -->
           <div class="form-field">
             <label>RÉGIMEN</label>
-            <select id="af_regimen" onchange="verificarOtro('af_regimen', 'custom_regimen_box')">
+            <select id="af_regimen">
               <option value="">-- Seleccionar Régimen --</option>
             </select>
-            <div class="custom-input-box" id="custom_regimen_box">
-              <input type="text" id="af_regimen_custom" placeholder="Escribe el valor exacto de REGIMEN" />
-            </div>
           </div>
 
-          <!-- DESPLEGABLE SIGLAS -->
+          <!-- DESPLEGABLE SIGLAS (VINCULADO A TABLA obras_sociales) -->
           <div class="form-field">
-            <label>SIGLAS</label>
-            <select id="af_siglas" onchange="verificarOtro('af_siglas', 'custom_siglas_box')">
+            <label>SIGLAS (OBRA SOCIAL)</label>
+            <select id="af_siglas">
               <option value="">-- Seleccionar Siglas --</option>
             </select>
-            <div class="custom-input-box" id="custom_siglas_box">
-              <input type="text" id="af_siglas_custom" placeholder="Escribe el valor exacto de SIGLAS" />
-            </div>
           </div>
 
           <!-- DESPLEGABLE LOCALIDAD -->
           <div class="form-field">
             <label>LOCALIDAD</label>
-            <select id="af_localidad" onchange="verificarOtro('af_localidad', 'custom_localidad_box')">
+            <select id="af_localidad">
               <option value="">-- Seleccionar Localidad --</option>
             </select>
-            <div class="custom-input-box" id="custom_localidad_box">
-              <input type="text" id="af_localidad_custom" placeholder="Escribe el valor exacto de LOCALIDAD" />
-            </div>
           </div>
 
           <!-- DESPLEGABLE TIPO DE GESTION -->
           <div class="form-field">
             <label>TIPO DE GESTIÓN</label>
-            <select id="af_gestion" onchange="verificarOtro('af_gestion', 'custom_gestion_box')">
+            <select id="af_gestion">
               <option value="">-- Seleccionar Tipo de Gestión --</option>
             </select>
-            <div class="custom-input-box" id="custom_gestion_box">
-              <input type="text" id="af_gestion_custom" placeholder="Escribe el valor exacto de TIPO DE GESTION" />
-            </div>
           </div>
         </div>
 
@@ -1295,23 +1276,17 @@
           <!-- DESPLEGABLE ESTADO -->
           <div class="form-field">
             <label>ESTADO</label>
-            <select id="tu_estado" onchange="verificarOtro('tu_estado', 'custom_estado_box')">
+            <select id="tu_estado">
               <option value="">-- Seleccionar Estado --</option>
             </select>
-            <div class="custom-input-box" id="custom_estado_box">
-              <input type="text" id="tu_estado_custom" placeholder="Escribe el valor exacto de ESTADO" />
-            </div>
           </div>
 
           <!-- DESPLEGABLE OPERADOR -->
           <div class="form-field">
             <label>OPERADOR</label>
-            <select id="tu_operador" onchange="verificarOtro('tu_operador', 'custom_operador_box')">
+            <select id="tu_operador">
               <option value="">-- Seleccionar Operador --</option>
             </select>
-            <div class="custom-input-box" id="custom_operador_box">
-              <input type="text" id="tu_operador_custom" placeholder="Escribe el valor exacto de OPERADOR" />
-            </div>
           </div>
         </div>
 
@@ -1338,13 +1313,92 @@
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
 
+    // LISTAS ESTÁTICAS EXACTAS SEGÚN LOS ENUM DE SUPABASE
     const OPCIONES_BASE = {
-      REGIMEN: ['MONOTRIBUTO', 'RELACION DE DEPENDENCIA', 'SERVICIO DOMESTICO', 'JUBILADO', 'PENSIONADO', 'ADHERENTE'],
-      SIGLAS: ['OSSACRA', 'OSDE', 'OSECAC', 'UPCN', 'IOSCOR', 'PAMI', 'OTRA'],
-      LOCALIDAD: ['CAPITAL', 'GOYA', 'PASO DE LOS LIBRES', 'CURUZU CUATIA', 'MERCEDES', 'BELLA VISTA', 'ITUZAINGO', 'SANTO TOME', 'ESQUINA', 'MONTE CASEROS'],
-      TIPO_GESTION: ['EMPADRONAMIENTO', 'ALTA TITULAR', 'ALTA FAMILIAR', 'CAMBIO DE OBRA SOCIAL', 'RECLAMO', 'CONSULTA', 'BAJA'],
-      ESTADO: ['PENDIENTE', 'CONFIRMADO', 'ATENDIDO', 'CANCELADO', 'AUSENTE'],
-      OPERADOR: ['OPERADOR 1', 'OPERADOR 2', 'MESA DE ENTRADA', 'CORRIENTES']
+      REGIMEN: [
+        'MONOTRIBUTO',
+        'MONOT. SOCIAL',
+        'S. DOMESTICO',
+        'REG. GENERAL',
+        'ADH. ORIGEN',
+        'JUBILADO'
+      ],
+      SIGLAS_FALLBACK: [
+        'OSSACRA',
+        'OSSIMRA',
+        'OSPACP',
+        'OSECAC',
+        'OSPS MERCEDES',
+        'OSPSIP',
+        'ASSPE',
+        'OSPLAD',
+        'OSPM',
+        'OSPCN',
+        'ARPSALUD',
+        'ANDAR',
+        'AMPES',
+        'SANCOR'
+      ],
+      LOCALIDAD: [
+        'CAPITAL',
+        '9 DE JULIO',
+        'ALVEAR',
+        'BELLA VISTA',
+        'BERON DE ASTRADA',
+        'BONPLAND',
+        'CAZADORES CORRENTINOS',
+        'CAA CATI',
+        'ECHAVARRIA',
+        'CHAVARRIA',
+        'PELLEGRINI',
+        'COLONIA CAROLINA',
+        'COLONIA LIBERTAD',
+        'COLONIA LIEBIG',
+        'COLONIA PANDO',
+        'CONCEPCION',
+        'CRUZ DE LOS MILAGROS',
+        'CURUZU CUATIA',
+        'EL SOMBRERO',
+        'EL CAIMAN',
+        'EMPEDRADO',
+        'ESQUINA',
+        'GOYA',
+        'LORETO',
+        'PASO DE LOS LIBRES',
+        'VIRASORO',
+        'JUAN PUJOL',
+        'MOCORETA',
+        'RIACHUELO',
+        'SANTA LUCIA'
+      ],
+      ESTADO: [
+        'ASISTIO',
+        'NO ASISTIO',
+        'NO REALIZO FILIATORIO',
+        'SIN DOCUMENTACION',
+        'CAMBIO TURNO'
+      ],
+      OPERADOR: [
+        'ASANDOVAL',
+        'DSOSA',
+        'MANZOTEGUI',
+        'BRIOS',
+        'RIBARRA',
+        'GOVIEDO',
+        'LMANCEDO',
+        'BMONZON'
+      ],
+      TIPO_GESTION: [
+        'EMPADRONAR',
+        'BAJA',
+        'CAMBIO DE PLAN',
+        'BAJA DE PLAN',
+        'OPCION DE CAMBIO',
+        'REACTIVACION',
+        'MODIFICACION',
+        'BLOQUEO/DESBLOQUEO',
+        'DEUDA'
+      ]
     };
 
     async function iniciarApp() {
@@ -1618,26 +1672,7 @@
       }
     }
 
-    function verificarOtro(selectId, customBoxId) {
-      const val = document.getElementById(selectId).value;
-      const box = document.getElementById(customBoxId);
-      if (val === '__OTRO__') {
-        box.classList.add('visible');
-        box.querySelector('input').focus();
-      } else {
-        box.classList.remove('visible');
-      }
-    }
-
-    function obtenerValorSelect(selectId, customInputId) {
-      const val = document.getElementById(selectId).value;
-      if (val === '__OTRO__') {
-        return document.getElementById(customInputId).value.trim().toUpperCase();
-      }
-      return val.trim();
-    }
-
-    function poblarSelect(selectId, valoresUnicos, incluirOtro, placeholder) {
+    function poblarSelect(selectId, valoresUnicos, placeholder) {
       const sel = document.getElementById(selectId);
       if (!sel) return;
       const valorPrevio = sel.value;
@@ -1651,42 +1686,65 @@
         sel.appendChild(opt);
       });
 
-      if (incluirOtro) {
-        const optOtro = document.createElement('option');
-        optOtro.value = '__OTRO__';
-        optOtro.textContent = '+ Escribir otro valor...';
-        sel.appendChild(optOtro);
-      }
-
       if (valorPrevio && Array.from(sel.options).some(function(o) { return o.value === valorPrevio; })) {
         sel.value = valorPrevio;
       }
     }
 
     function actualizarDesplegables() {
-      const regimenes = Array.from(new Set(OPCIONES_BASE.REGIMEN.concat(listaAfiliados.map(function(a) { return a.REGIMEN; }).filter(Boolean))));
-      const siglas = Array.from(new Set(OPCIONES_BASE.SIGLAS.concat(listaAfiliados.map(function(a) { return a.SIGLAS; }).filter(Boolean))));
-      const localidades = Array.from(new Set(OPCIONES_BASE.LOCALIDAD.concat(listaAfiliados.map(function(a) { return a.LOCALIDAD; }).filter(Boolean))));
-      const gestiones = Array.from(new Set(OPCIONES_BASE.TIPO_GESTION.concat(listaAfiliados.map(function(a) { return a['TIPO DE GESTION']; }).filter(Boolean))));
-      const estados = Array.from(new Set(OPCIONES_BASE.ESTADO.concat(listaTurnos.map(function(t) { return t.ESTADO; }).filter(Boolean))));
-      const operadores = Array.from(new Set(OPCIONES_BASE.OPERADOR.concat(listaTurnos.map(function(t) { return t.OPERADOR; }).filter(Boolean))));
+      // Formularios con listas cerradas exactas
+      poblarSelect('af_regimen', OPCIONES_BASE.REGIMEN, '-- Seleccionar Régimen --');
+      poblarSelect('af_localidad', OPCIONES_BASE.LOCALIDAD, '-- Seleccionar Localidad --');
+      poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
+      poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
+      poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
 
-      poblarSelect('af_regimen', regimenes, true, '-- Seleccionar Régimen --');
-      poblarSelect('af_siglas', siglas, true, '-- Seleccionar Siglas --');
-      poblarSelect('af_localidad', localidades, true, '-- Seleccionar Localidad --');
-      poblarSelect('af_gestion', gestiones, true, '-- Seleccionar Tipo de Gestión --');
-      poblarSelect('tu_estado', estados, true, '-- Seleccionar Estado --');
-      poblarSelect('tu_operador', operadores, true, '-- Seleccionar Operador --');
+      // Filtros de tablas
+      poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
+      poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
+      poblarSelect('f_af_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      poblarSelect('f_af_regimen', regimenes, false, 'Todos');
-      poblarSelect('f_af_siglas', siglas, false, 'Todas');
-      poblarSelect('f_af_gestion', gestiones, false, 'Todos');
-      poblarSelect('f_af_localidad', localidades, false, 'Todas');
+      poblarSelect('f_tu_estado', OPCIONES_BASE.ESTADO, 'Todos');
+      poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
+      poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
-      poblarSelect('f_tu_estado', estados, false, 'Todos');
-      poblarSelect('f_tu_operador', operadores, false, 'Todos');
-      poblarSelect('f_tu_localidad', localidades, false, 'Todas');
+      // Desplegable SIGLAS vinculado a la tabla obras_sociales de Supabase
+      const selSiglasForm = document.getElementById('af_siglas');
+      if (selSiglasForm) {
+        const previo = selSiglasForm.value;
+        selSiglasForm.innerHTML = '<option value="">-- Seleccionar Siglas --</option>';
 
+        if (listaObrasSociales.length > 0) {
+          listaObrasSociales.forEach(function(os) {
+            const siglaClean = (os.sigla || '').trim().toUpperCase();
+            if (!siglaClean) return;
+            const opt = document.createElement('option');
+            opt.value = siglaClean;
+            const nombreCorto = (os.nombre || '').slice(0, 50);
+            opt.textContent = nombreCorto ? (siglaClean + ' - ' + nombreCorto) : siglaClean;
+            selSiglasForm.appendChild(opt);
+          });
+        } else {
+          OPCIONES_BASE.SIGLAS_FALLBACK.forEach(function(sig) {
+            const opt = document.createElement('option');
+            opt.value = sig;
+            opt.textContent = sig;
+            selSiglasForm.appendChild(opt);
+          });
+        }
+
+        if (previo && Array.from(selSiglasForm.options).some(function(o) { return o.value === previo; })) {
+          selSiglasForm.value = previo;
+        }
+      }
+
+      const siglasUnicas = listaObrasSociales.length > 0
+        ? Array.from(new Set(listaObrasSociales.map(function(o) { return (o.sigla || '').trim().toUpperCase(); }).filter(Boolean)))
+        : OPCIONES_BASE.SIGLAS_FALLBACK;
+
+      poblarSelect('f_af_siglas', siglasUnicas, 'Todas');
+
+      // Selector de CUIL de afiliados para turnos
       const selCuil = document.getElementById('tu_cuil');
       if (selCuil) {
         selCuil.innerHTML = '<option value="">-- Seleccionar Afiliado por CUIL --</option>';
@@ -1713,9 +1771,16 @@
           .from('TURNOS')
           .select('*, afiliados(*)')
           .order('id', { ascending: false });
-
         if (resTu.error) throw resTu.error;
         listaTurnos = resTu.data || [];
+
+        const resOs = await supabaseClient
+          .from('obras_sociales')
+          .select('sigla, nombre, codigo_rnas, habilita_opcion')
+          .order('sigla', { ascending: true });
+        if (!resOs.error && resOs.data) {
+          listaObrasSociales = resOs.data;
+        }
 
         setEstadoConexion('ok', 'Conectado');
         actualizarDesplegables();
@@ -1769,15 +1834,15 @@
         const af = t.afiliados || {};
         const tieneAf = Boolean(af.CUIL);
         const estUpper = (t.ESTADO || '').toUpperCase();
-        const estClass = estUpper.indexOf('PEND') !== -1 ? 'est-pendiente' :
-                         estUpper.indexOf('CANC') !== -1 ? 'est-cancelado' : 'est-confirmado';
+        const estClass = estUpper.indexOf('NO ASIST') !== -1 || estUpper.indexOf('SIN DOC') !== -1 ? 'est-cancelado' :
+                         estUpper.indexOf('CAMBIO') !== -1 ? 'est-pendiente' : 'est-confirmado';
 
         return '<tr>' +
           '<td><input type="checkbox" class="chk-tu" /></td>' +
           '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar turno">»</td>' +
           '<td>' + (t.FECHA || '-') + '</td>' +
           '<td>' + (t.HORA || '').slice(0, 5) + '</td>' +
-          '<td><span class="badge-estado ' + estClass + '">' + (t.ESTADO || 'PENDIENTE') + '</span></td>' +
+          '<td><span class="badge-estado ' + estClass + '">' + (t.ESTADO || '-') + '</span></td>' +
           '<td class="' + (tieneAf ? 'text-si' : 'text-no') + '">' + (tieneAf ? 'Si' : 'No') + '</td>' +
           '<td>#' + t.id + '</td>' +
           '<td><b>' + (t.CUIL || '') + '</b></td>' +
@@ -1880,7 +1945,6 @@
       document.getElementById('drawerAfiliado').classList.remove('open');
       document.getElementById('drawerTurno').classList.remove('open');
       document.getElementById('drawerClave').classList.remove('open');
-      document.querySelectorAll('.custom-input-box').forEach(function(b) { b.classList.remove('visible'); });
     }
 
     function abrirDrawerAfiliado() {
@@ -1892,22 +1956,20 @@
       document.getElementById('drawerAfiliado').classList.add('open');
     }
 
-    function setValorSelectOEdicion(selectId, customBoxId, customInputId, valor) {
+    function setSelectValor(selectId, valor) {
       const sel = document.getElementById(selectId);
-      const box = document.getElementById(customBoxId);
+      if (!sel) return;
       if (!valor) {
         sel.value = '';
-        box.classList.remove('visible');
         return;
       }
-      if (Array.from(sel.options).some(function(o) { return o.value === valor; })) {
-        sel.value = valor;
-        box.classList.remove('visible');
-      } else {
-        sel.value = '__OTRO__';
-        box.classList.add('visible');
-        document.getElementById(customInputId).value = valor;
+      if (!Array.from(sel.options).some(function(o) { return o.value === valor; })) {
+        const opt = document.createElement('option');
+        opt.value = valor;
+        opt.textContent = valor;
+        sel.appendChild(opt);
       }
+      sel.value = valor;
     }
 
     function editarAfiliadoPorCuil(cuil) {
@@ -1923,10 +1985,10 @@
       document.getElementById('af_celular').value = af['NRO CELULAR'] || '';
       document.getElementById('af_correo').value = af['CORREO ELECTRONICO'] || '';
 
-      setValorSelectOEdicion('af_regimen', 'custom_regimen_box', 'af_regimen_custom', af.REGIMEN);
-      setValorSelectOEdicion('af_siglas', 'custom_siglas_box', 'af_siglas_custom', af.SIGLAS);
-      setValorSelectOEdicion('af_localidad', 'custom_localidad_box', 'af_localidad_custom', af.LOCALIDAD);
-      setValorSelectOEdicion('af_gestion', 'custom_gestion_box', 'af_gestion_custom', af['TIPO DE GESTION']);
+      setSelectValor('af_regimen', af.REGIMEN);
+      setSelectValor('af_siglas', af.SIGLAS);
+      setSelectValor('af_localidad', af.LOCALIDAD);
+      setSelectValor('af_gestion', af['TIPO DE GESTION']);
     }
 
     function abrirDrawerTurno(cuilPreseleccionado) {
@@ -1947,8 +2009,8 @@
       document.getElementById('tu_id').value = t.id;
       document.getElementById('tu_fecha').value = t.FECHA || '';
       document.getElementById('tu_hora').value = (t.HORA || '').slice(0, 5);
-      setValorSelectOEdicion('tu_estado', 'custom_estado_box', 'tu_estado_custom', t.ESTADO);
-      setValorSelectOEdicion('tu_operador', 'custom_operador_box', 'tu_operador_custom', t.OPERADOR);
+      setSelectValor('tu_estado', t.ESTADO);
+      setSelectValor('tu_operador', t.OPERADOR);
     }
 
     async function guardarAfiliado(e) {
@@ -1965,10 +2027,10 @@
 
       const cel = document.getElementById('af_celular').value.trim();
       const cor = document.getElementById('af_correo').value.trim();
-      const reg = obtenerValorSelect('af_regimen', 'af_regimen_custom');
-      const sig = obtenerValorSelect('af_siglas', 'af_siglas_custom');
-      const loc = obtenerValorSelect('af_localidad', 'af_localidad_custom');
-      const ges = obtenerValorSelect('af_gestion', 'af_gestion_custom');
+      const reg = document.getElementById('af_regimen').value.trim();
+      const sig = document.getElementById('af_siglas').value.trim();
+      const loc = document.getElementById('af_localidad').value.trim();
+      const ges = document.getElementById('af_gestion').value.trim();
 
       if (cel) payload['NRO CELULAR'] = cel;
       if (cor) payload['CORREO ELECTRONICO'] = cor;
@@ -2004,8 +2066,8 @@
         'HORA': horaConZona
       };
 
-      const est = obtenerValorSelect('tu_estado', 'tu_estado_custom');
-      const ope = obtenerValorSelect('tu_operador', 'tu_operador_custom');
+      const est = document.getElementById('tu_estado').value.trim();
+      const ope = document.getElementById('tu_operador').value.trim();
       if (est) payload['ESTADO'] = est;
       if (ope) payload['OPERADOR'] = ope;
 
