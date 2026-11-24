@@ -856,6 +856,40 @@
       border-color: var(--btn-blue);
       box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
     }
+
+    /* CHECKBOXES MÚLTIPLES DE PATOLOGÍAS */
+    .multi-check-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+    .multi-check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      user-select: none;
+    }
+    .multi-check-item:hover {
+      background: #e2e8f0;
+    }
+    .multi-check-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: var(--btn-blue);
+    }
+
     .drawer-footer {
       padding: 14px 20px;
       border-top: 1px solid var(--border);
@@ -1468,10 +1502,8 @@
           </div>
 
           <div class="form-field">
-            <label>CUADRO CLINICO (PATOLOGÍA)</label>
-            <select id="so_cuadro">
-              <option value="">-- Seleccionar Cuadro Clínico --</option>
-            </select>
+            <label>CUADRO CLINICO (PUEDES MARCAR VARIOS)</label>
+            <div class="multi-check-grid" id="so_cuadro_checks"></div>
           </div>
 
           <div class="form-field">
@@ -2084,6 +2116,17 @@
       }
     }
 
+    function renderizarCheckboxesPatologias() {
+      const cont = document.getElementById('so_cuadro_checks');
+      if (!cont) return;
+      cont.innerHTML = OPCIONES_BASE.PATOLOGIAS.map(function(pat) {
+        return '<label class="multi-check-item">' +
+          '<input type="checkbox" class="chk-patologia" value="' + pat + '" />' +
+          '<span>' + pat + '</span>' +
+        '</label>';
+      }).join('');
+    }
+
     function actualizarDesplegables() {
       poblarSelect('af_regimen', OPCIONES_BASE.REGIMEN, '-- Seleccionar Régimen --');
       poblarSelect('af_localidad', OPCIONES_BASE.LOCALIDAD, '-- Seleccionar Localidad --');
@@ -2091,7 +2134,7 @@
       poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
       poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
-      poblarSelect('so_cuadro', OPCIONES_BASE.PATOLOGIAS, '-- Seleccionar Cuadro Clínico --');
+      renderizarCheckboxesPatologias();
 
       poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
@@ -2500,7 +2543,16 @@
 
       setSelectValor('so_operador', item.OPERADOR);
       setSelectValor('so_avanzar', item['AVANZAR?']);
-      setSelectValor('so_cuadro', item['CUADRO CLINICO']);
+
+      const seleccionadas = (item['CUADRO CLINICO'] || '')
+        .split(',')
+        .map(function(v) { return v.trim().toUpperCase(); })
+        .filter(Boolean);
+
+      document.querySelectorAll('.chk-patologia').forEach(function(cb) {
+        cb.checked = seleccionadas.indexOf(cb.value.toUpperCase()) !== -1;
+      });
+
       document.getElementById('so_valores').value = item.VALORES || '';
       document.getElementById('so_grupo').value = item['GRUPO FAMILIAR'] != null ? item['GRUPO FAMILIAR'] : '';
       document.getElementById('so_obs').value = item['OBS DEL SONDEADOR'] || '';
@@ -2586,7 +2638,9 @@
       const cuil = document.getElementById('so_cuil').value;
       const ope = document.getElementById('so_operador').value.trim();
       const ava = document.getElementById('so_avanzar').value.trim();
-      const cua = document.getElementById('so_cuadro').value.trim();
+      const patologiasMarcadas = Array.from(document.querySelectorAll('.chk-patologia:checked'))
+        .map(function(cb) { return cb.value; });
+      const cua = patologiasMarcadas.join(', ');
       const val = document.getElementById('so_valores').value.trim().toUpperCase();
       const gru = document.getElementById('so_grupo').value.trim();
       const obs = document.getElementById('so_obs').value.trim().toUpperCase();
