@@ -500,23 +500,13 @@
       gap: 12px;
       margin-bottom: 18px;
     }
-    .filters-grid-5 {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 18px;
-    }
     @media (max-width: 1200px) {
       .filters-grid {
         grid-template-columns: repeat(3, 1fr);
       }
-      .filters-grid-5 {
-        grid-template-columns: repeat(3, 1fr);
-      }
     }
     @media (max-width: 700px) {
-      .filters-grid,
-      .filters-grid-5 {
+      .filters-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -841,7 +831,8 @@
       margin-bottom: 5px;
     }
     .form-field input,
-    .form-field select {
+    .form-field select,
+    .form-field textarea {
       width: 100%;
       padding: 9px 12px;
       border: 1px solid #cbd5e1;
@@ -849,13 +840,18 @@
       font-size: 0.88rem;
       background: #fff;
     }
+    .form-field textarea {
+      resize: vertical;
+      min-height: 76px;
+    }
     .form-field input[readonly] {
       background: #f1f5f9;
       color: #64748b;
       cursor: not-allowed;
     }
     .form-field input:focus,
-    .form-field select:focus {
+    .form-field select:focus,
+    .form-field textarea:focus {
       outline: none;
       border-color: var(--btn-blue);
       box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
@@ -1228,7 +1224,7 @@
           </div>
         </section>
 
-        <!-- VISTA 3: SONDEOS (SINCRONIZADO AUTOMÁTICAMENTE CON OPCION DE CAMBIO, ALTA DIRECTA Y PREPAGO) -->
+        <!-- VISTA 3: SONDEOS -->
         <section id="vistaSondeos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
@@ -1236,7 +1232,7 @@
             <button type="button" class="btn-pill" onclick="exportarCSV('sondeos')">Exportar Sondeos CSV ⤓</button>
           </div>
 
-          <div class="filters-grid-5">
+          <div class="filters-grid">
             <div class="outlined-field">
               <label>Cuil - Titular</label>
               <input type="text" id="f_so_cuil" placeholder="Buscar por CUIL..." oninput="filtrarSondeos()" />
@@ -1263,6 +1259,12 @@
             <div class="outlined-field">
               <label>Cuadro Clínico</label>
               <input type="text" id="f_so_cuadro" placeholder="Filtrar patología..." oninput="filtrarSondeos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Operador</label>
+              <select id="f_so_operador" onchange="filtrarSondeos()">
+                <option value="">Todos</option>
+              </select>
             </div>
           </div>
 
@@ -1299,10 +1301,12 @@
                     <th>CUADRO CLINICO</th>
                     <th>VALORES</th>
                     <th>GRUPO FAMILIAR</th>
+                    <th>OPERADOR</th>
+                    <th>OBS DEL SONDEADOR</th>
                   </tr>
                 </thead>
                 <tbody id="tbodySondeos">
-                  <tr><td colspan="13" style="text-align:center; padding:30px; color:#64748b;">Cargando sondeos...</td></tr>
+                  <tr><td colspan="15" style="text-align:center; padding:30px; color:#64748b;">Cargando sondeos...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1447,6 +1451,13 @@
           <input type="hidden" id="so_cuil" value="" />
 
           <div class="form-field">
+            <label>OPERADOR</label>
+            <select id="so_operador">
+              <option value="">-- Seleccionar Operador --</option>
+            </select>
+          </div>
+
+          <div class="form-field">
             <label>AVANZAR?</label>
             <select id="so_avanzar">
               <option value="">-- Seleccionar --</option>
@@ -1471,6 +1482,11 @@
           <div class="form-field">
             <label>GRUPO FAMILIAR (CANTIDAD)</label>
             <input type="number" id="so_grupo" min="0" step="1" placeholder="Ej: 1, 2, 4..." />
+          </div>
+
+          <div class="form-field">
+            <label>OBS DEL SONDEADOR</label>
+            <textarea id="so_obs" placeholder="Escribe observaciones del sondeo..."></textarea>
           </div>
         </div>
 
@@ -1539,7 +1555,6 @@
     const DOMINIO_INSTITUCIONAL = '@ossacra.org.ar';
     const CORREO_RECUPERO_DEFAULT = 'rocio.ibarra@ossacra.org.ar';
 
-    // Gestiones que pasan automáticamente a SONDEOS
     const GESTIONES_SONDEO = ['OPCION DE CAMBIO', 'ALTA DIRECTA', 'PREPAGO'];
 
     let supabaseClient = null;
@@ -1652,7 +1667,7 @@
         'CALCULO DEUDA',
         'CONVENIO DE PAGO'
       ],
-       PATOLOGIAS: [
+      PATOLOGIAS: [
         'HIPERTENSION',
         'DIABLETES',
         'OBESIDAD',
@@ -1662,7 +1677,6 @@
         'CA',
         'OTROS'
       ]
-
     };
 
     async function iniciarApp() {
@@ -2076,11 +2090,8 @@
       poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
       poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
-
-      // Desplegable Cuadro Clínico (combina base + patologías ya cargadas en SONDEOS)
-      const patExistentes = listaSondeos.map(function(s) { return s['CUADRO CLINICO']; }).filter(Boolean);
-      const todasPatologias = Array.from(new Set(OPCIONES_BASE.PATOLOGIAS.concat(patExistentes)));
-      poblarSelect('so_cuadro', todasPatologias, '-- Seleccionar Cuadro Clínico --');
+      poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
+      poblarSelect('so_cuadro', OPCIONES_BASE.PATOLOGIAS, '-- Seleccionar Cuadro Clínico --');
 
       poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
@@ -2091,6 +2102,7 @@
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
       poblarSelect('f_so_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
+      poblarSelect('f_so_operador', OPCIONES_BASE.OPERADOR, 'Todos');
 
       const dlFiltro = document.getElementById('datalist_siglas_filtro');
       if (dlFiltro) {
@@ -2117,7 +2129,6 @@
     async function sincronizarSondeosDesdeAfiliados(mostrarMensajeManual) {
       if (!supabaseClient || !usuarioActual) return;
 
-      // 1. Filtrar afiliados que tengan OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO
       const candidatos = listaAfiliados.filter(function(af) {
         const g = (af['TIPO DE GESTION'] || '').trim().toUpperCase();
         return GESTIONES_SONDEO.indexOf(g) !== -1;
@@ -2127,7 +2138,6 @@
         listaSondeos.map(function(s) { return String(s.CUIL || '').trim(); })
       );
 
-      // 2. Detectar los que aún no están insertados en la tabla SONDEOS
       const faltantes = candidatos.filter(function(af) {
         return af.CUIL && !cuilsExistentesEnSondeo.has(String(af.CUIL).trim());
       });
@@ -2139,7 +2149,6 @@
         await supabaseClient.from('SONDEOS').insert(nuevosRegistros);
       }
 
-      // 3. Releer SONDEOS con sus datos de afiliados
       const resSo = await supabaseClient
         .from('SONDEOS')
         .select('*, afiliados(*)')
@@ -2147,8 +2156,6 @@
 
       const sondeosTabla = (!resSo.error && resSo.data) ? resSo.data : [];
 
-      // 4. Asegurar que la vista siempre muestre únicamente los afiliados de esas 3 gestiones
-      //    (incluso si Supabase aún tiene algún registro pendiente o ya guardado)
       const mapaSondeos = {};
       sondeosTabla.forEach(function(s) {
         mapaSondeos[String(s.CUIL || '').trim()] = s;
@@ -2190,7 +2197,6 @@
           .order('CUIL', { ascending: true });
         listaSondeos = (!resSo.error && resSo.data) ? resSo.data : [];
 
-        // Sincronizar automáticamente OPCION DE CAMBIO, ALTA DIRECTA y PREPAGO hacia SONDEOS
         await sincronizarSondeosDesdeAfiliados(false);
 
         const resOs = await supabaseClient
@@ -2330,8 +2336,9 @@
       const fReg = document.getElementById('f_so_regimen').value.toLowerCase();
       const fAva = document.getElementById('f_so_avanzar').value.toLowerCase();
       const fCua = document.getElementById('f_so_cuadro').value.toLowerCase().trim();
+      const fOpe = document.getElementById('f_so_operador').value.toLowerCase();
 
-      const activos = [fCuil, fNom, fReg, fAva, fCua].filter(Boolean).length;
+      const activos = [fCuil, fNom, fReg, fAva, fCua, fOpe].filter(Boolean).length;
       document.getElementById('badgeFiltrosSondeos').textContent = activos;
       document.getElementById('badgeTotalSondeos').textContent = listaSondeos.length;
 
@@ -2341,14 +2348,15 @@
                (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
                (!fReg || (af.REGIMEN || '').toLowerCase() === fReg) &&
                (!fAva || (s['AVANZAR?'] || '').toLowerCase() === fAva) &&
-               (!fCua || (s['CUADRO CLINICO'] || '').toLowerCase().indexOf(fCua) !== -1);
+               (!fCua || (s['CUADRO CLINICO'] || '').toLowerCase().indexOf(fCua) !== -1) &&
+               (!fOpe || (s.OPERADOR || '').toLowerCase() === fOpe);
       });
 
       document.getElementById('infoSondeos').textContent = filtrados.length + ' registros';
       const tbody = document.getElementById('tbodySondeos');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#64748b;">No hay registros con OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO en Base de Datos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:24px; color:#64748b;">No hay registros con OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO en Base de Datos.</td></tr>';
         return;
       }
 
@@ -2372,6 +2380,8 @@
           '<td>' + (s['CUADRO CLINICO'] || '-') + '</td>' +
           '<td>' + (s.VALORES || '-') + '</td>' +
           '<td>' + (s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : '-') + '</td>' +
+          '<td>' + (s.OPERADOR || '-') + '</td>' +
+          '<td>' + (s['OBS DEL SONDEADOR'] || '-') + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -2391,7 +2401,7 @@
     }
 
     function limpiarFiltrosSondeos() {
-      ['f_so_cuil', 'f_so_nombre', 'f_so_regimen', 'f_so_avanzar', 'f_so_cuadro'].forEach(function(id) {
+      ['f_so_cuil', 'f_so_nombre', 'f_so_regimen', 'f_so_avanzar', 'f_so_cuadro', 'f_so_operador'].forEach(function(id) {
         document.getElementById(id).value = '';
       });
       filtrarSondeos();
@@ -2488,10 +2498,12 @@
         '<b>Régimen:</b> ' + (af.REGIMEN || '-') + ' &nbsp;|&nbsp; <b>Siglas:</b> ' + (af.SIGLAS || '-') + '<br>' +
         '<b>Gestión:</b> ' + (af['TIPO DE GESTION'] || '-') + ' &nbsp;|&nbsp; <b>Celular:</b> ' + (af['NRO CELULAR'] || '-');
 
+      setSelectValor('so_operador', item.OPERADOR);
       setSelectValor('so_avanzar', item['AVANZAR?']);
       setSelectValor('so_cuadro', item['CUADRO CLINICO']);
       document.getElementById('so_valores').value = item.VALORES || '';
       document.getElementById('so_grupo').value = item['GRUPO FAMILIAR'] != null ? item['GRUPO FAMILIAR'] : '';
+      document.getElementById('so_obs').value = item['OBS DEL SONDEADOR'] || '';
       document.getElementById('drawerSondeo').classList.add('open');
     }
 
@@ -2558,7 +2570,6 @@
       if (res.error) {
         mostrarAlerta('Error al guardar dato: ' + res.error.message, 'error');
       } else {
-        // Si la gestión corresponde a SONDEOS, aseguramos su alta inmediata en la tabla SONDEOS
         if (GESTIONES_SONDEO.indexOf(ges.toUpperCase()) !== -1) {
           await supabaseClient.from('SONDEOS').upsert([{ 'CUIL': cuil }], { onConflict: 'CUIL', ignoreDuplicates: true });
         }
@@ -2573,17 +2584,21 @@
       if (!supabaseClient || !usuarioActual) return;
 
       const cuil = document.getElementById('so_cuil').value;
+      const ope = document.getElementById('so_operador').value.trim();
       const ava = document.getElementById('so_avanzar').value.trim();
       const cua = document.getElementById('so_cuadro').value.trim();
       const val = document.getElementById('so_valores').value.trim().toUpperCase();
       const gru = document.getElementById('so_grupo').value.trim();
+      const obs = document.getElementById('so_obs').value.trim().toUpperCase();
 
       const payload = {
         'CUIL': cuil,
+        'OPERADOR': ope || null,
         'AVANZAR?': ava || null,
         'CUADRO CLINICO': cua || null,
         'VALORES': val || null,
-        'GRUPO FAMILIAR': gru !== '' ? Number(gru) : null
+        'GRUPO FAMILIAR': gru !== '' ? Number(gru) : null,
+        'OBS DEL SONDEADOR': obs || null
       };
 
       const res = await supabaseClient
@@ -2646,7 +2661,7 @@
           })
         );
       } else if (tipo === 'sondeos') {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'AVANZAR?', 'CUADRO CLINICO', 'VALORES', 'GRUPO FAMILIAR']].concat(
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'AVANZAR?', 'CUADRO CLINICO', 'VALORES', 'GRUPO FAMILIAR', 'OPERADOR', 'OBS DEL SONDEADOR']].concat(
           datos.map(function(s) {
             const af = s.afiliados || {};
             return [
@@ -2660,7 +2675,9 @@
               s['AVANZAR?'] || '',
               s['CUADRO CLINICO'] || '',
               s.VALORES || '',
-              s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : ''
+              s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : '',
+              s.OPERADOR || '',
+              s['OBS DEL SONDEADOR'] || ''
             ];
           })
         );
