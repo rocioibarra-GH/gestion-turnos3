@@ -844,7 +844,8 @@
       resize: vertical;
       min-height: 76px;
     }
-    .form-field input[readonly] {
+    .form-field input[readonly],
+    .form-field select:disabled {
       background: #f1f5f9;
       color: #64748b;
       cursor: not-allowed;
@@ -856,8 +857,19 @@
       border-color: var(--btn-blue);
       box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.12);
     }
+    .hint-lock {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 4px;
+      display: block;
+    }
+    .two-col-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
 
-    /* CHECKBOXES MÚLTIPLES DE PATOLOGÍAS */
+    /* CHECKBOXES MÚLTIPLES */
     .multi-check-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -888,6 +900,27 @@
       margin: 0;
       cursor: pointer;
       accent-color: var(--btn-blue);
+    }
+    .single-check-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      font-size: 0.86rem;
+      font-weight: 700;
+      color: #1e293b;
+      cursor: pointer;
+      user-select: none;
+    }
+    .single-check-box input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      cursor: pointer;
+      accent-color: var(--green-ok);
     }
 
     .drawer-footer {
@@ -1026,6 +1059,10 @@
           <span class="nav-icon">📊</span>
           <span class="nav-label">Sondeos</span>
         </div>
+        <div class="nav-item sub-item" id="nav-movimientos" onclick="cambiarVista('movimientos')">
+          <span class="nav-icon">🔁</span>
+          <span class="nav-label">Movimientos</span>
+        </div>
 
         <div class="nav-item" onclick="abrirDrawerAfiliado()">
           <span class="nav-icon">👤</span>
@@ -1130,6 +1167,7 @@
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
               <button type="button" class="tool-btn" onclick="cambiarVista('sondeos')" title="Ver Sondeos">📊</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('movimientos')" title="Ver Movimientos">🔁</button>
               <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
                 ⚑
                 <span class="tool-badge" id="badgeTotalAfiliados">0</span>
@@ -1331,16 +1369,114 @@
                     <th>Siglas (Obra Social)</th>
                     <th>Localidad</th>
                     <th>Tipo de Gestión</th>
+                    <th>OPERADOR</th>
+                    <th>FECHA LLAMADA</th>
+                    <th>HORA LLAMADA</th>
                     <th>AVANZAR?</th>
                     <th>CUADRO CLINICO</th>
                     <th>VALORES</th>
                     <th>GRUPO FAMILIAR</th>
-                    <th>OPERADOR</th>
                     <th>OBS DEL SONDEADOR</th>
                   </tr>
                 </thead>
                 <tbody id="tbodySondeos">
-                  <tr><td colspan="15" style="text-align:center; padding:30px; color:#64748b;">Cargando sondeos...</td></tr>
+                  <tr><td colspan="17" style="text-align:center; padding:30px; color:#64748b;">Cargando sondeos...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- VISTA 4: MOVIMIENTOS -->
+        <section id="vistaMovimientos" style="display:none;">
+          <div class="action-bar">
+            <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="sincronizarMovimientosDesdeAfiliados(true)">🔄 Sincronizar Movimientos</button>
+            <button type="button" class="btn-pill" onclick="exportarCSV('movimientos')">Exportar Movimientos CSV ⤓</button>
+          </div>
+
+          <div class="filters-grid">
+            <div class="outlined-field">
+              <label>Cuil - Titular</label>
+              <input type="text" id="f_mo_cuil" placeholder="Buscar por CUIL..." oninput="filtrarMovimientos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Apellido y Nombre</label>
+              <input type="text" id="f_mo_nombre" placeholder="Buscar afiliado..." oninput="filtrarMovimientos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Tipo de Gestión</label>
+              <select id="f_mo_gestion" onchange="filtrarMovimientos()">
+                <option value="">Todos</option>
+                <option value="BAJA">BAJA</option>
+                <option value="CAMBIO DE PLAN">CAMBIO DE PLAN</option>
+                <option value="BAJA DE PLAN">BAJA DE PLAN</option>
+                <option value="MODIFICAR REGISTRO">MODIFICAR REGISTRO</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Procesado</label>
+              <select id="f_mo_procesado" onchange="filtrarMovimientos()">
+                <option value="">Todos</option>
+                <option value="SI">SI (Procesado)</option>
+                <option value="NO">NO (Pendiente)</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Recibe Operador</label>
+              <select id="f_mo_recibe" onchange="filtrarMovimientos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Procesa Operador</label>
+              <select id="f_mo_procesa" onchange="filtrarMovimientos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-card">
+            <div class="grid-toolbar">
+              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
+              <button type="button" class="tool-btn" title="Total Movimientos">
+                ⚑
+                <span class="tool-badge" id="badgeTotalMovimientos">0</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="limpiarFiltrosMovimientos()" title="Limpiar filtros">
+                ▼
+                <span class="tool-badge" id="badgeFiltrosMovimientos">0</span>
+              </button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('movimientos')" title="Exportar Movimientos CSV">⤓</button>
+              <div class="toolbar-right-info" id="infoMovimientos">0 registros</div>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-mo')" /></th>
+                    <th>Editar</th>
+                    <th>Cuil - Titular</th>
+                    <th>Apellido y Nombre</th>
+                    <th>Nro Celular</th>
+                    <th>Régimen</th>
+                    <th>Siglas</th>
+                    <th>Localidad</th>
+                    <th>Tipo de Gestión</th>
+                    <th>RECIBE OPERADOR</th>
+                    <th>PLAN ACTUAL</th>
+                    <th>PLAN NUEVO</th>
+                    <th>FORM COMPLETO?</th>
+                    <th>FECHA MOVIMIENTO</th>
+                    <th>PROCESA OPERADOR</th>
+                    <th>PROCESADO</th>
+                    <th>OBSERVACIONES</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyMovimientos">
+                  <tr><td colspan="17" style="text-align:center; padding:30px; color:#64748b;">Cargando movimientos...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1485,10 +1621,22 @@
           <input type="hidden" id="so_cuil" value="" />
 
           <div class="form-field">
-            <label>OPERADOR</label>
+            <label>OPERADOR ASIGNADO</label>
             <select id="so_operador">
-              <option value="">-- Seleccionar Operador --</option>
+              <option value="">-- Sin asignar --</option>
             </select>
+            <span class="hint-lock" id="so_hint_operador"></span>
+          </div>
+
+          <div class="two-col-row">
+            <div class="form-field">
+              <label>FECHA LLAMADA (AUTOMÁTICA)</label>
+              <input type="text" id="so_fecha_llamada" readonly placeholder="Se registra al sondear" />
+            </div>
+            <div class="form-field">
+              <label>HORA LLAMADA (AUTOMÁTICA)</label>
+              <input type="text" id="so_hora_llamada" readonly placeholder="Se registra al sondear" />
+            </div>
           </div>
 
           <div class="form-field">
@@ -1525,6 +1673,80 @@
         <div class="drawer-footer">
           <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
           <button type="submit" class="btn-pill">Guardar Sondeo ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DRAWER: EDITAR CAMPOS PROPIOS DE MOVIMIENTOS -->
+  <div class="drawer-overlay" id="drawerMovimiento">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>Gestión de Movimiento</h3>
+        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
+      </div>
+      <form id="formMovimiento" onsubmit="guardarMovimiento(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="drawer-body">
+          <div class="info-box-readonly" id="mo_info_afiliado"></div>
+
+          <input type="hidden" id="mo_cuil" value="" />
+
+          <div class="form-field">
+            <label>RECIBE OPERADOR</label>
+            <select id="mo_recibe_operador">
+              <option value="">-- Seleccionar Operador que recibe --</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>PLAN ACTUAL</label>
+            <input type="text" id="mo_plan_actual" placeholder="Ej: PLAN PMO / PLAN 1000..." />
+          </div>
+
+          <div class="form-field">
+            <label>PLAN NUEVO</label>
+            <input type="text" id="mo_plan_nuevo" placeholder="Ej: PLAN 2000 / BAJA..." />
+          </div>
+
+          <div class="form-field">
+            <label>FORM COMPLETO?</label>
+            <select id="mo_form_completo">
+              <option value="">-- Seleccionar --</option>
+              <option value="SI">SI</option>
+              <option value="NO">NO</option>
+              <option value="PENDIENTE">PENDIENTE</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>FECHA MOVIMIENTO</label>
+            <input type="date" id="mo_fecha" />
+          </div>
+
+          <div class="form-field">
+            <label>PROCESA OPERADOR</label>
+            <select id="mo_procesa_operador">
+              <option value="">-- Seleccionar Operador que procesa --</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>ESTADO DE PROCESAMIENTO</label>
+            <label class="single-check-box">
+              <input type="checkbox" id="mo_procesado" />
+              <span>MOVIMIENTO PROCESADO</span>
+            </label>
+          </div>
+
+          <div class="form-field">
+            <label>OBSERVACIONES</label>
+            <textarea id="mo_obs" placeholder="Detalle del movimiento o modificación..."></textarea>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
+          <button type="submit" class="btn-pill">Guardar Movimiento ›</button>
         </div>
       </form>
     </div>
@@ -1588,6 +1810,8 @@
     const CORREO_RECUPERO_DEFAULT = 'rocio.ibarra@ossacra.org.ar';
 
     const GESTIONES_SONDEO = ['OPCION DE CAMBIO', 'ALTA DIRECTA', 'PREPAGO'];
+    const GESTIONES_MOVIMIENTOS = ['BAJA', 'CAMBIO DE PLAN', 'BAJA DE PLAN', 'MODIFICAR REGISTRO'];
+    const ASIGNADORES_SONDEO = ['BRIOS', 'RIBARRA'];
 
     let supabaseClient = null;
     let usuarioActual = null;
@@ -1595,6 +1819,7 @@
     let listaAfiliados = [];
     let listaTurnos = [];
     let listaSondeos = [];
+    let listaMovimientos = [];
     let listaObrasSociales = [];
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
@@ -1684,7 +1909,6 @@
         'RIBARRA',
         'RAGUAYO',
         'LMANCEDO'
-        
       ],
       TIPO_GESTION: [
         'ALTA',
@@ -1713,6 +1937,41 @@
         'OTROS'
       ]
     };
+
+    function obtenerUsuarioCodigo() {
+      if (!usuarioActual || !usuarioActual.email) return '';
+      const prefix = usuarioActual.email.split('@')[0].toUpperCase().trim();
+      if (prefix === 'ROCIO.IBARRA') return 'RIBARRA';
+      return prefix;
+    }
+
+    function esAsignadorSondeo() {
+      const code = obtenerUsuarioCodigo();
+      return ASIGNADORES_SONDEO.indexOf(code) !== -1;
+    }
+
+    function obtenerFechaHoraSistemaArgentina() {
+      const ahora = new Date();
+      const partesFecha = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(ahora);
+
+      const partesHora = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'America/Argentina/Buenos_Aires',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).format(ahora);
+
+      return {
+        fecha: partesFecha,
+        hora: partesHora
+      };
+    }
 
     async function iniciarApp() {
       actualizarDesplegables();
@@ -1914,7 +2173,7 @@
         appContainer.classList.remove('hidden');
 
         const email = user.email || '';
-        const nombreCorto = email.split('@')[0].toUpperCase();
+        const nombreCorto = obtenerUsuarioCodigo();
         document.getElementById('userSedeLabel').textContent = nombreCorto || 'OPERADOR';
         document.getElementById('userEmailLabel').textContent = email;
         document.getElementById('userAvatar').textContent = (nombreCorto || 'O')[0];
@@ -2018,7 +2277,7 @@
       if (!usuarioActual) return;
       document.getElementById('formCambiarClave').reset();
       const email = usuarioActual.email || '';
-      document.getElementById('clave_usuario_fijo').value = email.split('@')[0].toUpperCase();
+      document.getElementById('clave_usuario_fijo').value = obtenerUsuarioCodigo();
       document.getElementById('clave_correo_fijo').value = email;
       document.getElementById('drawerClave').classList.add('open');
     }
@@ -2085,16 +2344,20 @@
       document.getElementById('vistaAfiliados').style.display = vista === 'afiliados' ? 'block' : 'none';
       document.getElementById('vistaTurnos').style.display = vista === 'turnos' ? 'block' : 'none';
       document.getElementById('vistaSondeos').style.display = vista === 'sondeos' ? 'block' : 'none';
+      document.getElementById('vistaMovimientos').style.display = vista === 'movimientos' ? 'block' : 'none';
 
       document.getElementById('nav-afiliados').classList.toggle('active', vista === 'afiliados');
       document.getElementById('nav-turnos').classList.toggle('active', vista === 'turnos');
       document.getElementById('nav-sondeos').classList.toggle('active', vista === 'sondeos');
+      document.getElementById('nav-movimientos').classList.toggle('active', vista === 'movimientos');
 
       const bc = document.getElementById('breadcrumb');
       if (vista === 'turnos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos y Solicitudes</span>';
       } else if (vista === 'sondeos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Sondeos</span>';
+      } else if (vista === 'movimientos') {
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Movimientos</span>';
       } else {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
       }
@@ -2124,10 +2387,23 @@
       if (!cont) return;
       cont.innerHTML = OPCIONES_BASE.PATOLOGIAS.map(function(pat) {
         return '<label class="multi-check-item">' +
-          '<input type="checkbox" class="chk-patologia" value="' + pat + '" />' +
+          '<input type="checkbox" class="chk-patologia" value="' + pat + '" onchange="manejarCheckPatologia(this)" />' +
           '<span>' + pat + '</span>' +
         '</label>';
       }).join('');
+    }
+
+    function manejarCheckPatologia(checkbox) {
+      if (!checkbox.checked) return;
+      if (checkbox.value === 'NINGUNO') {
+        document.querySelectorAll('.chk-patologia').forEach(function(cb) {
+          if (cb.value !== 'NINGUNO') cb.checked = false;
+        });
+      } else {
+        document.querySelectorAll('.chk-patologia').forEach(function(cb) {
+          if (cb.value === 'NINGUNO') cb.checked = false;
+        });
+      }
     }
 
     function actualizarDesplegables() {
@@ -2136,7 +2412,9 @@
       poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
       poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
-      poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
+      poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Sin asignar --');
+      poblarSelect('mo_recibe_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador que recibe --');
+      poblarSelect('mo_procesa_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador que procesa --');
       renderizarCheckboxesPatologias();
 
       poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
@@ -2149,6 +2427,9 @@
 
       poblarSelect('f_so_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_so_operador', OPCIONES_BASE.OPERADOR, 'Todos');
+
+      poblarSelect('f_mo_recibe', OPCIONES_BASE.OPERADOR, 'Todos');
+      poblarSelect('f_mo_procesa', OPCIONES_BASE.OPERADOR, 'Todos');
 
       const dlFiltro = document.getElementById('datalist_siglas_filtro');
       if (dlFiltro) {
@@ -2220,6 +2501,55 @@
       }
     }
 
+    /* ================= SINCRONIZACIÓN AUTOMÁTICA A MOVIMIENTOS ================= */
+    async function sincronizarMovimientosDesdeAfiliados(mostrarMensajeManual) {
+      if (!supabaseClient || !usuarioActual) return;
+
+      const candidatos = listaAfiliados.filter(function(af) {
+        const g = (af['TIPO DE GESTION'] || '').trim().toUpperCase();
+        return GESTIONES_MOVIMIENTOS.indexOf(g) !== -1;
+      });
+
+      const cuilsExistentesEnMov = new Set(
+        listaMovimientos.map(function(m) { return String(m.CUIL || '').trim(); })
+      );
+
+      const faltantes = candidatos.filter(function(af) {
+        return af.CUIL && !cuilsExistentesEnMov.has(String(af.CUIL).trim());
+      });
+
+      if (faltantes.length > 0) {
+        const nuevosRegistros = faltantes.map(function(af) {
+          return { 'CUIL': String(af.CUIL).trim() };
+        });
+        await supabaseClient.from('MOVIMIENTOS').insert(nuevosRegistros);
+      }
+
+      const resMo = await supabaseClient
+        .from('MOVIMIENTOS')
+        .select('*, afiliados(*)')
+        .order('CUIL', { ascending: true });
+
+      const movsTabla = (!resMo.error && resMo.data) ? resMo.data : [];
+
+      const mapaMovs = {};
+      movsTabla.forEach(function(m) {
+        mapaMovs[String(m.CUIL || '').trim()] = m;
+      });
+
+      listaMovimientos = candidatos.map(function(af) {
+        const cuilKey = String(af.CUIL || '').trim();
+        const regMo = mapaMovs[cuilKey] || { CUIL: cuilKey };
+        regMo.afiliados = af;
+        return regMo;
+      });
+
+      if (mostrarMensajeManual) {
+        mostrarAlerta('Movimientos sincronizados: ' + listaMovimientos.length + ' registros encontrados.', 'success');
+        filtrarMovimientos();
+      }
+    }
+
     async function cargarDatos() {
       if (!supabaseClient || !usuarioActual) return;
 
@@ -2243,7 +2573,14 @@
           .order('CUIL', { ascending: true });
         listaSondeos = (!resSo.error && resSo.data) ? resSo.data : [];
 
+        const resMo = await supabaseClient
+          .from('MOVIMIENTOS')
+          .select('*, afiliados(*)')
+          .order('CUIL', { ascending: true });
+        listaMovimientos = (!resMo.error && resMo.data) ? resMo.data : [];
+
         await sincronizarSondeosDesdeAfiliados(false);
+        await sincronizarMovimientosDesdeAfiliados(false);
 
         const resOs = await supabaseClient
           .from('obras_sociales')
@@ -2260,6 +2597,7 @@
         filtrarTurnos();
         filtrarAfiliados();
         filtrarSondeos();
+        filtrarMovimientos();
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
         document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
@@ -2402,7 +2740,7 @@
       const tbody = document.getElementById('tbodySondeos');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:24px; color:#64748b;">No hay registros con OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO en Base de Datos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:24px; color:#64748b;">No hay registros con OPCION DE CAMBIO, ALTA DIRECTA o PREPAGO en Base de Datos.</td></tr>';
         return;
       }
 
@@ -2411,6 +2749,7 @@
         const cuilEsc = String(s.CUIL || '').replace(/'/g, "\\'");
         const avaUpper = (s['AVANZAR?'] || '').toUpperCase();
         const avaClass = avaUpper === 'SI' ? 'text-si' : avaUpper === 'NO' ? 'text-no' : '';
+        const horaFmt = s['HORA LLAMADA'] ? String(s['HORA LLAMADA']).slice(0, 5) + ' hs' : '-';
 
         return '<tr>' +
           '<td><input type="checkbox" class="chk-so" /></td>' +
@@ -2422,12 +2761,75 @@
           '<td>' + (af.SIGLAS || '-') + '</td>' +
           '<td>' + (af.LOCALIDAD || '-') + '</td>' +
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+          '<td><b>' + (s.OPERADOR || '-') + '</b></td>' +
+          '<td>' + (s['FECHA LLAMADA'] || '-') + '</td>' +
+          '<td>' + horaFmt + '</td>' +
           '<td class="' + avaClass + '">' + (s['AVANZAR?'] || '-') + '</td>' +
           '<td>' + (s['CUADRO CLINICO'] || '-') + '</td>' +
           '<td>' + (s.VALORES || '-') + '</td>' +
           '<td>' + (s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : '-') + '</td>' +
-          '<td>' + (s.OPERADOR || '-') + '</td>' +
           '<td>' + (s['OBS DEL SONDEADOR'] || '-') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function filtrarMovimientos() {
+      const fCuil = document.getElementById('f_mo_cuil').value.toLowerCase().trim();
+      const fNom = document.getElementById('f_mo_nombre').value.toLowerCase().trim();
+      const fGes = document.getElementById('f_mo_gestion').value.toLowerCase();
+      const fProc = document.getElementById('f_mo_procesado').value;
+      const fRec = document.getElementById('f_mo_recibe').value.toLowerCase();
+      const fProOpe = document.getElementById('f_mo_procesa').value.toLowerCase();
+
+      const activos = [fCuil, fNom, fGes, fProc, fRec, fProOpe].filter(Boolean).length;
+      document.getElementById('badgeFiltrosMovimientos').textContent = activos;
+      document.getElementById('badgeTotalMovimientos').textContent = listaMovimientos.length;
+
+      const filtrados = listaMovimientos.filter(function(m) {
+        const af = m.afiliados || {};
+        const esProcesado = m.PROCESADO === true ? 'SI' : 'NO';
+
+        return (!fCuil || (m.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
+               (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
+               (!fGes || (af['TIPO DE GESTION'] || '').toLowerCase() === fGes) &&
+               (!fProc || esProcesado === fProc) &&
+               (!fRec || (m['RECIBE OPERADOR'] || '').toLowerCase() === fRec) &&
+               (!fProOpe || (m['PROCESA OPERADOR'] || '').toLowerCase() === fProOpe);
+      });
+
+      document.getElementById('infoMovimientos').textContent = filtrados.length + ' registros';
+      const tbody = document.getElementById('tbodyMovimientos');
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:24px; color:#64748b;">No hay registros con BAJA, CAMBIO DE PLAN, BAJA DE PLAN o MODIFICAR REGISTRO en Base de Datos.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(function(m) {
+        const af = m.afiliados || {};
+        const cuilEsc = String(m.CUIL || '').replace(/'/g, "\\'");
+        const formUpper = (m['FORM COMPLETO?'] || '').toUpperCase();
+        const formClass = formUpper === 'SI' ? 'text-si' : formUpper === 'NO' ? 'text-no' : '';
+        const procBool = m.PROCESADO === true;
+
+        return '<tr>' +
+          '<td><input type="checkbox" class="chk-mo" /></td>' +
+          '<td class="cell-action" onclick="editarMovimientoPorCuil(\'' + cuilEsc + '\')" title="Gestionar Movimiento">»</td>' +
+          '<td><b>' + (m.CUIL || '') + '</b></td>' +
+          '<td>' + (af['APELLIDO Y NOMBRE'] || '-') + '</td>' +
+          '<td>' + (af['NRO CELULAR'] || '-') + '</td>' +
+          '<td>' + (af.REGIMEN || '-') + '</td>' +
+          '<td>' + (af.SIGLAS || '-') + '</td>' +
+          '<td>' + (af.LOCALIDAD || '-') + '</td>' +
+          '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+          '<td>' + (m['RECIBE OPERADOR'] || '-') + '</td>' +
+          '<td>' + (m.PLAN_ACTUAL || '-') + '</td>' +
+          '<td>' + (m.PLAN_NUEVO || '-') + '</td>' +
+          '<td class="' + formClass + '">' + (m['FORM COMPLETO?'] || '-') + '</td>' +
+          '<td>' + (m['FECHA MOVIMIENTO'] || '-') + '</td>' +
+          '<td>' + (m['PROCESA OPERADOR'] || '-') + '</td>' +
+          '<td class="' + (procBool ? 'text-si' : 'text-no') + '">' + (procBool ? 'SI' : 'NO') + '</td>' +
+          '<td>' + (m.OBSERVACIONES || '-') + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -2451,6 +2853,13 @@
         document.getElementById(id).value = '';
       });
       filtrarSondeos();
+    }
+
+    function limpiarFiltrosMovimientos() {
+      ['f_mo_cuil', 'f_mo_nombre', 'f_mo_gestion', 'f_mo_procesado', 'f_mo_recibe', 'f_mo_procesa'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      filtrarMovimientos();
     }
 
     function ordenarTurnos() {
@@ -2481,6 +2890,7 @@
       document.getElementById('drawerAfiliado').classList.remove('open');
       document.getElementById('drawerTurno').classList.remove('open');
       document.getElementById('drawerSondeo').classList.remove('open');
+      document.getElementById('drawerMovimiento').classList.remove('open');
       document.getElementById('drawerClave').classList.remove('open');
       cerrarComboSiglas();
     }
@@ -2545,6 +2955,20 @@
         '<b>Gestión:</b> ' + (af['TIPO DE GESTION'] || '-') + ' &nbsp;|&nbsp; <b>Celular:</b> ' + (af['NRO CELULAR'] || '-');
 
       setSelectValor('so_operador', item.OPERADOR);
+
+      const selOperador = document.getElementById('so_operador');
+      const hintOp = document.getElementById('so_hint_operador');
+      const puedeAsignar = esAsignadorSondeo();
+      selOperador.disabled = !puedeAsignar;
+      hintOp.textContent = puedeAsignar
+        ? 'Puedes asignar o cambiar el operador responsable del sondeo.'
+        : 'Solo BRIOS o RIBARRA pueden asignar o reasignar el operador.';
+
+      document.getElementById('so_fecha_llamada').value = item['FECHA LLAMADA'] || '';
+      document.getElementById('so_hora_llamada').value = item['HORA LLAMADA']
+        ? String(item['HORA LLAMADA']).slice(0, 5) + ' hs'
+        : '';
+
       setSelectValor('so_avanzar', item['AVANZAR?']);
 
       const seleccionadas = (item['CUADRO CLINICO'] || '')
@@ -2560,6 +2984,31 @@
       document.getElementById('so_grupo').value = item['GRUPO FAMILIAR'] != null ? item['GRUPO FAMILIAR'] : '';
       document.getElementById('so_obs').value = item['OBS DEL SONDEADOR'] || '';
       document.getElementById('drawerSondeo').classList.add('open');
+    }
+
+    function editarMovimientoPorCuil(cuil) {
+      if (!usuarioActual) return;
+      const item = listaMovimientos.find(function(m) { return m.CUIL === cuil; });
+      if (!item) return;
+
+      const af = item.afiliados || {};
+      document.getElementById('formMovimiento').reset();
+      document.getElementById('mo_cuil').value = item.CUIL || '';
+      document.getElementById('mo_info_afiliado').innerHTML =
+        '<b>CUIL:</b> ' + (item.CUIL || '') + '<br>' +
+        '<b>Afiliado:</b> ' + (af['APELLIDO Y NOMBRE'] || '-') + '<br>' +
+        '<b>Régimen:</b> ' + (af.REGIMEN || '-') + ' &nbsp;|&nbsp; <b>Siglas:</b> ' + (af.SIGLAS || '-') + '<br>' +
+        '<b>Gestión:</b> ' + (af['TIPO DE GESTION'] || '-') + ' &nbsp;|&nbsp; <b>Celular:</b> ' + (af['NRO CELULAR'] || '-');
+
+      setSelectValor('mo_recibe_operador', item['RECIBE OPERADOR']);
+      document.getElementById('mo_plan_actual').value = item.PLAN_ACTUAL || '';
+      document.getElementById('mo_plan_nuevo').value = item.PLAN_NUEVO || '';
+      setSelectValor('mo_form_completo', item['FORM COMPLETO?']);
+      document.getElementById('mo_fecha').value = item['FECHA MOVIMIENTO'] || '';
+      setSelectValor('mo_procesa_operador', item['PROCESA OPERADOR']);
+      document.getElementById('mo_procesado').checked = item.PROCESADO === true;
+      document.getElementById('mo_obs').value = item.OBSERVACIONES || '';
+      document.getElementById('drawerMovimiento').classList.add('open');
     }
 
     function abrirDrawerTurno(cuilPreseleccionado) {
@@ -2625,8 +3074,12 @@
       if (res.error) {
         mostrarAlerta('Error al guardar dato: ' + res.error.message, 'error');
       } else {
-        if (GESTIONES_SONDEO.indexOf(ges.toUpperCase()) !== -1) {
+        const gesUpper = ges.toUpperCase();
+        if (GESTIONES_SONDEO.indexOf(gesUpper) !== -1) {
           await supabaseClient.from('SONDEOS').upsert([{ 'CUIL': cuil }], { onConflict: 'CUIL', ignoreDuplicates: true });
+        }
+        if (GESTIONES_MOVIMIENTOS.indexOf(gesUpper) !== -1) {
+          await supabaseClient.from('MOVIMIENTOS').upsert([{ 'CUIL': cuil }], { onConflict: 'CUIL', ignoreDuplicates: true });
         }
         mostrarAlerta(esEdicion ? 'Registro actualizado correctamente.' : 'Dato registrado correctamente.', 'success');
         cerrarDrawers();
@@ -2639,7 +3092,12 @@
       if (!supabaseClient || !usuarioActual) return;
 
       const cuil = document.getElementById('so_cuil').value;
-      const ope = document.getElementById('so_operador').value.trim();
+      const previo = listaSondeos.find(function(s) { return s.CUIL === cuil; }) || {};
+
+      const ope = esAsignadorSondeo()
+        ? document.getElementById('so_operador').value.trim()
+        : (previo.OPERADOR || '');
+
       const ava = document.getElementById('so_avanzar').value.trim();
       const patologiasMarcadas = Array.from(document.querySelectorAll('.chk-patologia:checked'))
         .map(function(cb) { return cb.value; });
@@ -2648,9 +3106,21 @@
       const gru = document.getElementById('so_grupo').value.trim();
       const obs = document.getElementById('so_obs').value.trim().toUpperCase();
 
+      const hayDatosLlamada = Boolean(ava || cua || val || gru !== '' || obs);
+      let fechaLlamadaFinal = previo['FECHA LLAMADA'] || null;
+      let horaLlamadaFinal = previo['HORA LLAMADA'] || null;
+
+      if (hayDatosLlamada && (!fechaLlamadaFinal || !horaLlamadaFinal)) {
+        const selloSistema = obtenerFechaHoraSistemaArgentina();
+        if (!fechaLlamadaFinal) fechaLlamadaFinal = selloSistema.fecha;
+        if (!horaLlamadaFinal) horaLlamadaFinal = selloSistema.hora;
+      }
+
       const payload = {
         'CUIL': cuil,
         'OPERADOR': ope || null,
+        'FECHA LLAMADA': fechaLlamadaFinal,
+        'HORA LLAMADA': horaLlamadaFinal,
         'AVANZAR?': ava || null,
         'CUADRO CLINICO': cua || null,
         'VALORES': val || null,
@@ -2666,6 +3136,45 @@
         mostrarAlerta('Error al guardar sondeo: ' + res.error.message, 'error');
       } else {
         mostrarAlerta('Sondeo actualizado correctamente.', 'success');
+        cerrarDrawers();
+        cargarDatos();
+      }
+    }
+
+    async function guardarMovimiento(e) {
+      e.preventDefault();
+      if (!supabaseClient || !usuarioActual) return;
+
+      const cuil = document.getElementById('mo_cuil').value;
+      const recOpe = document.getElementById('mo_recibe_operador').value.trim();
+      const pact = document.getElementById('mo_plan_actual').value.trim().toUpperCase();
+      const pnue = document.getElementById('mo_plan_nuevo').value.trim().toUpperCase();
+      const formComp = document.getElementById('mo_form_completo').value.trim();
+      const fecMov = document.getElementById('mo_fecha').value;
+      const proOpe = document.getElementById('mo_procesa_operador').value.trim();
+      const procBool = document.getElementById('mo_procesado').checked;
+      const obs = document.getElementById('mo_obs').value.trim().toUpperCase();
+
+      const payload = {
+        'CUIL': cuil,
+        'RECIBE OPERADOR': recOpe || null,
+        'PLAN_ACTUAL': pact || null,
+        'PLAN_NUEVO': pnue || null,
+        'FORM COMPLETO?': formComp || null,
+        'FECHA MOVIMIENTO': fecMov || null,
+        'PROCESA OPERADOR': proOpe || null,
+        'PROCESADO': procBool,
+        'OBSERVACIONES': obs || null
+      };
+
+      const res = await supabaseClient
+        .from('MOVIMIENTOS')
+        .upsert([payload], { onConflict: 'CUIL' });
+
+      if (res.error) {
+        mostrarAlerta('Error al guardar movimiento: ' + res.error.message, 'error');
+      } else {
+        mostrarAlerta('Movimiento actualizado correctamente.', 'success');
         cerrarDrawers();
         cargarDatos();
       }
@@ -2707,6 +3216,7 @@
       let datos = listaAfiliados;
       if (tipo === 'turnos') datos = listaTurnos;
       if (tipo === 'sondeos') datos = listaSondeos;
+      if (tipo === 'movimientos') datos = listaMovimientos;
       if (!datos.length) return;
 
       let filas = [];
@@ -2718,7 +3228,7 @@
           })
         );
       } else if (tipo === 'sondeos') {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'AVANZAR?', 'CUADRO CLINICO', 'VALORES', 'GRUPO FAMILIAR', 'OPERADOR', 'OBS DEL SONDEADOR']].concat(
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'OPERADOR', 'FECHA LLAMADA', 'HORA LLAMADA', 'AVANZAR?', 'CUADRO CLINICO', 'VALORES', 'GRUPO FAMILIAR', 'OBS DEL SONDEADOR']].concat(
           datos.map(function(s) {
             const af = s.afiliados || {};
             return [
@@ -2729,12 +3239,37 @@
               af.SIGLAS || '',
               af.LOCALIDAD || '',
               af['TIPO DE GESTION'] || '',
+              s.OPERADOR || '',
+              s['FECHA LLAMADA'] || '',
+              s['HORA LLAMADA'] ? String(s['HORA LLAMADA']).slice(0, 5) : '',
               s['AVANZAR?'] || '',
               s['CUADRO CLINICO'] || '',
               s.VALORES || '',
               s['GRUPO FAMILIAR'] != null ? s['GRUPO FAMILIAR'] : '',
-              s.OPERADOR || '',
               s['OBS DEL SONDEADOR'] || ''
+            ];
+          })
+        );
+      } else if (tipo === 'movimientos') {
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'RECIBE OPERADOR', 'PLAN ACTUAL', 'PLAN NUEVO', 'FORM COMPLETO?', 'FECHA MOVIMIENTO', 'PROCESA OPERADOR', 'PROCESADO', 'OBSERVACIONES']].concat(
+          datos.map(function(m) {
+            const af = m.afiliados || {};
+            return [
+              m.CUIL,
+              af['APELLIDO Y NOMBRE'] || '',
+              af['NRO CELULAR'] || '',
+              af.REGIMEN || '',
+              af.SIGLAS || '',
+              af.LOCALIDAD || '',
+              af['TIPO DE GESTION'] || '',
+              m['RECIBE OPERADOR'] || '',
+              m.PLAN_ACTUAL || '',
+              m.PLAN_NUEVO || '',
+              m['FORM COMPLETO?'] || '',
+              m['FECHA MOVIMIENTO'] || '',
+              m['PROCESA OPERADOR'] || '',
+              m.PROCESADO === true ? 'SI' : 'NO',
+              m.OBSERVACIONES || ''
             ];
           })
         );
