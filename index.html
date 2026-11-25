@@ -4269,8 +4269,7 @@
 
       const csv = filas.map(function(r) {
         return r.map(function(c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
-      }).join('
-');
+      }).join('\n');
 
       const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
