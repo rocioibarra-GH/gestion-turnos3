@@ -1943,11 +1943,23 @@
       ]
     };
 
+    const MAPA_OPERADORES_POR_EMAIL = {
+      'rocio.ibarra@ossacra.org.ar': 'RIBARRA',
+      'micaela.anzotegui@ossacra.org.ar': 'MANZOTEGUI',
+      'dolores.sosa@ossacra.org.ar': 'DSOSA',
+      'belen.rios@ossacra.org.ar': 'BRIOS',
+      'ariel.sandoval@ossacra.org.ar': 'ASANDOVAL',
+      'silvia.aguayo@ossacra.org.ar': 'RAGUAYO',
+      'delegacion.corrientes@ossacra.org.ar': 'DELCTES'
+    };
+
     function obtenerUsuarioCodigo() {
       if (!usuarioActual || !usuarioActual.email) return '';
-      const prefix = usuarioActual.email.split('@')[0].toUpperCase().trim();
-      if (prefix === 'ROCIO.IBARRA') return 'RIBARRA';
-      return prefix;
+      const emailLimpio = usuarioActual.email.trim().toLowerCase();
+      if (MAPA_OPERADORES_POR_EMAIL[emailLimpio]) {
+        return MAPA_OPERADORES_POR_EMAIL[emailLimpio];
+      }
+      return emailLimpio.split('@')[0].toUpperCase().trim();
     }
 
     function esAsignadorSondeo() {
