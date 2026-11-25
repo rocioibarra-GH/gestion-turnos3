@@ -1447,6 +1447,19 @@
                 <option value="">Todos</option>
               </select>
             </div>
+            <div class="outlined-field">
+              <label>Estado Turno</label>
+              <select id="f_at_estado" onchange="filtrarAgendaTurnos()">
+                <option value="">Todos</option>
+                <option value="ASISTIO">ASISTIO</option>
+                <option value="INTRANET">INTRANET</option>
+                <option value="NO ASISTIO">NO ASISTIO</option>
+                <option value="NO REALIZO FILIATORIO">NO REALIZO FILIATORIO</option>
+                <option value="SIN DOCUMENTACION">SIN DOCUMENTACION</option>
+                <option value="INCONSISTENTE">INCONSISTENTE</option>
+                <option value="MULTIPLE COBERTURA">MULTIPLE COBERTURA</option>
+              </select>
+            </div>
           </div>
 
           <div class="grid-card">
@@ -1481,6 +1494,7 @@
                     <th>Tipo de Gestión</th>
                     <th>FECHA TURNO</th>
                     <th>HORA TURNO</th>
+                    <th>ESTADO TURNO</th>
                     <th>OPERADOR</th>
                     <th>FECHA CARGA</th>
                     <th>HORA CARGA</th>
@@ -1674,7 +1688,21 @@
           </div>
 
           <div class="form-field">
-            <label>SIGLAS (OBRA SOCIAL)</label>
+            <label>LOCALIDAD</label>
+            <select id="af_localidad">
+              <option value="">-- Seleccionar Localidad --</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>TIPO DE GESTIÓN</label>
+            <select id="af_gestion" onchange="actualizarVisibilidadObraSocialEleccion()">
+              <option value="">-- Seleccionar Tipo de Gestión --</option>
+            </select>
+          </div>
+
+          <div class="form-field" id="campoObraSocialEleccion" style="display:none;">
+            <label>OBRA SOCIAL ELECCION</label>
             <div class="combo-wrapper" id="siglasComboWrapper">
               <div class="combo-input-row">
                 <input
@@ -1691,20 +1719,6 @@
               <input type="hidden" id="af_siglas" value="" />
               <div class="combo-dropdown" id="siglasComboDropdown"></div>
             </div>
-          </div>
-
-          <div class="form-field">
-            <label>LOCALIDAD</label>
-            <select id="af_localidad">
-              <option value="">-- Seleccionar Localidad --</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label>TIPO DE GESTIÓN</label>
-            <select id="af_gestion">
-              <option value="">-- Seleccionar Tipo de Gestión --</option>
-            </select>
           </div>
 
           <div class="form-field">
@@ -1863,6 +1877,65 @@
         <div class="drawer-footer">
           <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
           <button type="submit" class="btn-pill">Guardar Movimiento ›</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DRAWER: EVALUACIÓN DE TURNO (SIMILAR A SONDEOS) -->
+  <div class="drawer-overlay" id="drawerEvaluacionTurno">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h3>Evaluación de Turno</h3>
+        <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
+      </div>
+      <form id="formEvaluacionTurno" onsubmit="guardarEvaluacionTurno(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+        <div class="drawer-body">
+          <div class="info-box-readonly" id="et_info_afiliado"></div>
+
+          <input type="hidden" id="et_id_mov" value="" />
+
+          <div class="form-field">
+            <label>OPERADOR ASIGNADO</label>
+            <select id="et_operador">
+              <option value="">-- Sin asignar --</option>
+            </select>
+          </div>
+
+          <div class="two-col-row">
+            <div class="form-field">
+              <label>FECHA TURNO</label>
+              <input type="date" id="et_fecha_turno" />
+            </div>
+            <div class="form-field">
+              <label>HORA TURNO</label>
+              <input type="time" id="et_hora_turno" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>ESTADO DE TURNO *</label>
+            <select id="et_estado_turno" required>
+              <option value="">-- Seleccionar Estado --</option>
+              <option value="ASISTIO">ASISTIO</option>
+              <option value="INTRANET">INTRANET</option>
+              <option value="NO ASISTIO">NO ASISTIO</option>
+              <option value="NO REALIZO FILIATORIO">NO REALIZO FILIATORIO</option>
+              <option value="SIN DOCUMENTACION">SIN DOCUMENTACION</option>
+              <option value="INCONSISTENTE">INCONSISTENTE</option>
+              <option value="MULTIPLE COBERTURA">MULTIPLE COBERTURA</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label>OBSERVACIONES DEL TURNO</label>
+            <textarea id="et_obs" placeholder="Escribe observaciones de la atención / turno..."></textarea>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
+          <button type="submit" class="btn-pill">Guardar Turno ›</button>
         </div>
       </form>
     </div>
@@ -2078,6 +2151,9 @@
       if (!OPCIONES_BASE.MOVI.length) {
         OPCIONES_BASE.MOVI = extraerValoresDeFilas(listaTurnos, ['TIPO MOVIMIENTO', 'ESTADO']);
       }
+      if (!OPCIONES_BASE.MOVI.length) {
+        OPCIONES_BASE.MOVI = ['CITADO', 'COORDINAR', '0800', 'LEGALES', 'RECLAMO', 'CONSULTA'];
+      }
       if (!OPCIONES_BASE.ESTADO.length) {
         OPCIONES_BASE.ESTADO = OPCIONES_BASE.MOVI.slice();
       }
@@ -2290,6 +2366,26 @@
         ? (sigUpper + ' - ' + encontrada.nombre)
         : sigUpper;
       document.getElementById('btnLimpiarSigla').style.display = 'block';
+    }
+
+    /* ================= VISIBILIDAD DE SIGLAS (OBRA SOCIAL ELECCION) ================= */
+    function esGestionOpcionConPropia() {
+      const sel = document.getElementById('af_gestion');
+      const val = ((sel && sel.value) || '').trim().toUpperCase();
+      return val === 'OPCION C/PROPIA' || val === 'OPCIÓN C/PROPIA';
+    }
+
+    function actualizarVisibilidadObraSocialEleccion(limpiarSiOculto) {
+      const cont = document.getElementById('campoObraSocialEleccion');
+      if (!cont) return;
+      const mostrar = esGestionOpcionConPropia();
+      cont.style.display = mostrar ? 'block' : 'none';
+      if (!mostrar) {
+        cerrarComboSiglas();
+        if (limpiarSiOculto !== false) {
+          setValorSiglaFormulario('');
+        }
+      }
     }
 
     /* ================= AUTENTICACIÓN ================= */
@@ -2536,6 +2632,7 @@
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Modificar Registros</span>';
       } else if (vista === 'agenda_turnos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos</span>';
+        filtrarAgendaTurnos();
       } else {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
       }
@@ -2752,12 +2849,54 @@
         if (resAf.error) throw resAf.error;
         listaAfiliados = resAf.data || [];
 
-        const resTu = await supabaseClient
+        // Leer MOVIMIENTOS DIARIOS (donde se carga FECHA TURNO y HS TURNO al elegir TIPO MOVIMIENTO = CITADO)
+        // y combinar con TURNOS (tabla aparte donde se guarda la evaluación del turno)
+        const resMovDiarios = await supabaseClient
           .from('MOVIMIENTOS DIARIOS')
           .select('*, afiliados(*)')
           .order('id', { ascending: false });
-        if (resTu.error) throw resTu.error;
-        listaTurnos = resTu.data || [];
+
+        const resTurnosEval = await supabaseClient
+          .from('TURNOS')
+          .select('*');
+
+        const mapaEvalTurno = {};
+        if (!resTurnosEval.error && Array.isArray(resTurnosEval.data)) {
+          resTurnosEval.data.forEach(function(ev) {
+            if (ev.CUIL) {
+              mapaEvalTurno[String(ev.CUIL).trim()] = ev;
+            } else if (ev.id != null) {
+              mapaEvalTurno['ID_' + String(ev.id)] = ev;
+            }
+          });
+        }
+
+        if (!resMovDiarios.error && Array.isArray(resMovDiarios.data)) {
+          listaTurnos = resMovDiarios.data.map(function(md) {
+            const cuilKey = String(md.CUIL || '').trim();
+            const ev = (cuilKey && mapaEvalTurno[cuilKey]) || (md.id != null ? mapaEvalTurno['ID_' + String(md.id)] : null);
+            if (!ev) return md;
+            return Object.assign({}, md, {
+              'FECHA TURNO': ev['FECHA TURNO'] || md['FECHA TURNO'] || md.FECHA_TURNO || null,
+              'HS TURNO': ev['HS TURNO'] || md['HS TURNO'] || md['HORA TURNO'] || md.HS_TURNO || null,
+              'ESTADO TURNO': ev['ESTADO TURNO'] || md['ESTADO TURNO'] || md.ESTADO_TURNO || null,
+              'OPERADOR': ev['OPERADOR'] || md['OPERADOR'] || null,
+              'OBSERVACIONES': ev['OBSERVACIONES'] != null ? ev['OBSERVACIONES'] : md['OBSERVACIONES']
+            });
+          });
+        } else if (!resTurnosEval.error && Array.isArray(resTurnosEval.data)) {
+          const mapaAf = {};
+          listaAfiliados.forEach(function(af) {
+            if (af.CUIL) mapaAf[String(af.CUIL).trim()] = af;
+          });
+          listaTurnos = resTurnosEval.data.map(function(ev) {
+            return Object.assign({}, ev, {
+              afiliados: mapaAf[String(ev.CUIL || '').trim()] || null
+            });
+          });
+        } else {
+          throw (resMovDiarios.error || resTurnosEval.error);
+        }
 
         const resSo = await supabaseClient
           .from('SONDEOS')
@@ -2782,6 +2921,7 @@
         filtrarAfiliados();
         filtrarSondeos();
         filtrarMovimientos();
+        filtrarAgendaTurnos();
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
         document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
@@ -3087,6 +3227,7 @@
       document.getElementById('drawerSondeo').classList.remove('open');
       document.getElementById('drawerMovimiento').classList.remove('open');
       document.getElementById('drawerClave').classList.remove('open');
+      document.getElementById('drawerEvaluacionTurno').classList.remove('open');
       cerrarComboSiglas();
     }
 
@@ -3094,6 +3235,7 @@
       if (!usuarioActual) return;
       document.getElementById('formAfiliado').reset();
       setValorSiglaFormulario('');
+      actualizarVisibilidadObraSocialEleccion(true);
       document.getElementById('af_modo_edicion').value = 'false';
       document.getElementById('af_cuil').readOnly = false;
       document.getElementById('tituloDrawerAfiliado').textContent = 'Nuevo Dato';
@@ -3130,9 +3272,10 @@
       document.getElementById('af_correo').value = af['CORREO ELECTRONICO'] || '';
 
       setSelectValor('af_regimen', af.REGIMEN);
-      setValorSiglaFormulario(af.SIGLAS);
       setSelectValor('af_localidad', af.LOCALIDAD);
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
+      actualizarVisibilidadObraSocialEleccion(false);
+      setValorSiglaFormulario(af.SIGLAS);
       setSelectValor('af_medio_recepcion', af['MEDIO DE RECEPCION']);
     }
 
@@ -3266,10 +3409,12 @@
       e.preventDefault();
       if (!supabaseClient || !usuarioActual) return;
 
-      const textoBusquedaSigla = document.getElementById('af_siglas_busqueda').value.trim();
-      const sig = document.getElementById('af_siglas').value.trim();
+      const ges = document.getElementById('af_gestion').value.trim();
+      const esOpcionPropia = ges.toUpperCase() === 'OPCION C/PROPIA' || ges.toUpperCase() === 'OPCIÓN C/PROPIA';
+      const textoBusquedaSigla = esOpcionPropia ? document.getElementById('af_siglas_busqueda').value.trim() : '';
+      const sig = esOpcionPropia ? document.getElementById('af_siglas').value.trim() : '';
 
-      if (textoBusquedaSigla && !sig) {
+      if (esOpcionPropia && textoBusquedaSigla && !sig) {
         mostrarAlerta('Selecciona una obra social válida de la lista desplegable.', 'error');
         abrirComboSiglas();
         return;
@@ -3287,15 +3432,14 @@
       const cor = document.getElementById('af_correo').value.trim();
       const reg = document.getElementById('af_regimen').value.trim();
       const loc = document.getElementById('af_localidad').value.trim();
-      const ges = document.getElementById('af_gestion').value.trim();
       const med = document.getElementById('af_medio_recepcion').value.trim();
 
       if (cel) payload['NRO CELULAR'] = cel;
       if (cor) payload['CORREO ELECTRONICO'] = cor;
       if (reg) payload['REGIMEN'] = reg;
-      if (sig) payload['SIGLAS'] = sig;
-      if (loc) payload['LOCALIDAD'] = loc;
       if (ges) payload['TIPO DE GESTION'] = ges;
+      payload['SIGLAS'] = esOpcionPropia ? (sig || null) : null;
+      if (loc) payload['LOCALIDAD'] = loc;
       if (med) payload['MEDIO DE RECEPCION'] = med;
 
       if (!esEdicion) {
@@ -3306,9 +3450,21 @@
         payload['HORA'] = selloSistema.hora + '-03';
       }
 
-      const res = esEdicion
-        ? await supabaseClient.from('afiliados').update(payload).eq('CUIL', cuil)
-        : await supabaseClient.from('afiliados').insert([payload]);
+      let payloadSeguro = Object.assign({}, payload);
+      let res = esEdicion
+        ? await supabaseClient.from('afiliados').update(payloadSeguro).eq('CUIL', cuil)
+        : await supabaseClient.from('afiliados').insert([payloadSeguro]);
+
+      let intentosCols = 0;
+      while (res.error && intentosCols < 8 && /Could not find the '([^']+)' column of 'afiliados'/i.test(res.error.message || '')) {
+        const matchCol = (res.error.message || '').match(/Could not find the '([^']+)' column of 'afiliados'/i);
+        if (!matchCol || !(matchCol[1] in payloadSeguro)) break;
+        delete payloadSeguro[matchCol[1]];
+        intentosCols++;
+        res = esEdicion
+          ? await supabaseClient.from('afiliados').update(payloadSeguro).eq('CUIL', cuil)
+          : await supabaseClient.from('afiliados').insert([payloadSeguro]);
+      }
 
       if (res.error) {
         mostrarAlerta('Error al guardar dato: ' + res.error.message, 'error');
@@ -3488,9 +3644,20 @@
       if (resultadoFinal.error) {
         mostrarAlerta('Error al guardar movimiento diario: ' + resultadoFinal.error.message, 'error');
       } else {
+        if (esCitado) {
+          const resSyncTurno = await upsertTurnoDesdeMovimiento(payload, {
+            'FECHA TURNO': fechaTurnoManual,
+            'HS TURNO': horaTurnoManual,
+            'OPERADOR': ope || null,
+            'OBSERVACIONES': obs || null
+          });
+          if (resSyncTurno.error) {
+            mostrarAlerta('Movimiento CITADO guardado, pero hubo un aviso al sincronizar TURNOS: ' + resSyncTurno.error.message, 'error');
+          }
+        }
         mostrarAlerta(
           esCitado
-            ? 'Movimiento CITADO guardado y reflejado en la vista Turnos (' + fechaTurnoManual + ' ' + horaTurnoManual.slice(0, 5) + ').'
+            ? 'Movimiento CITADO guardado y sincronizado en TURNOS por CUIL (' + fechaTurnoManual + ' ' + horaTurnoManual.slice(0, 5) + ').'
             : (idTurno ? 'Movimiento diario actualizado (fecha y hora conservadas).' : 'Movimiento diario guardado con fecha y hora del sistema.'),
           'success'
         );
@@ -3499,18 +3666,125 @@
       }
     }
 
+    const ESTADOS_TURNO_VALIDOS = [
+      'ASISTIO',
+      'INTRANET',
+      'NO ASISTIO',
+      'NO REALIZO FILIATORIO',
+      'SIN DOCUMENTACION',
+      'INCONSISTENTE',
+      'MULTIPLE COBERTURA'
+    ];
+
+    async function upsertTurnoDesdeMovimiento(datosBase, overridesTurno) {
+      if (!supabaseClient || !datosBase || !datosBase.CUIL) return { error: null };
+      const cuil = String(datosBase.CUIL).trim();
+      const dtBase = obtenerDatosTurnoCitado(datosBase);
+      const ov = overridesTurno || {};
+
+      const fechaTurnoFinal = (ov['FECHA TURNO'] !== undefined)
+        ? ov['FECHA TURNO']
+        : (dtBase.fechaTurno !== '-' ? dtBase.fechaTurno : null);
+
+      const horaTurnoFinal = (ov['HS TURNO'] !== undefined)
+        ? ov['HS TURNO']
+        : (dtBase.horaTurno !== '-' ? (dtBase.horaTurno.length === 5 ? dtBase.horaTurno + ':00' : dtBase.horaTurno) : null);
+
+      const estadoTurnoFinal = (ov['ESTADO TURNO'] !== undefined)
+        ? ov['ESTADO TURNO']
+        : (dtBase.estadoTurno || null);
+
+      const operadorFinal = (ov['OPERADOR'] !== undefined)
+        ? ov['OPERADOR']
+        : (datosBase.OPERADOR || null);
+
+      const obsFinal = (ov['OBSERVACIONES'] !== undefined)
+        ? ov['OBSERVACIONES']
+        : (datosBase.OBSERVACIONES || null);
+
+      const payloadTurno = {
+        'CUIL': cuil,
+        'FECHA': datosBase.FECHA || null,
+        'HORA': datosBase.HORA || null,
+        'TIPO MOVIMIENTO': datosBase['TIPO MOVIMIENTO'] || datosBase.ESTADO || 'CITADO',
+        'FECHA TURNO': fechaTurnoFinal,
+        'HS TURNO': horaTurnoFinal,
+        'ESTADO TURNO': estadoTurnoFinal,
+        'OPERADOR': operadorFinal,
+        'OBSERVACIONES': obsFinal
+      };
+
+      // Intentar upsert usando CUIL como clave única
+      let res = await supabaseClient
+        .from('TURNOS')
+        .upsert([payloadTurno], { onConflict: 'CUIL' });
+
+      // Si CUIL no tiene restricción UNIQUE en TURNOS, actualizar por CUIL o insertar si no existe
+      if (res.error) {
+        const resUpd = await supabaseClient
+          .from('TURNOS')
+          .update(payloadTurno)
+          .eq('CUIL', cuil)
+          .select();
+
+        if (!resUpd.error && Array.isArray(resUpd.data) && resUpd.data.length > 0) {
+          res = { error: null, data: resUpd.data };
+        } else {
+          res = await supabaseClient
+            .from('TURNOS')
+            .insert([payloadTurno]);
+        }
+      }
+
+      // Si faltan columnas en TURNOS, reintentar con columnas base
+      if (res.error && /column|FECHA TURNO|HS TURNO|ESTADO TURNO|TIPO MOVIMIENTO/i.test(res.error.message || '')) {
+        const payloadReducido = {
+          'CUIL': cuil,
+          'OPERADOR': operadorFinal,
+          'OBSERVACIONES': obsFinal
+        };
+        let resRed = await supabaseClient
+          .from('TURNOS')
+          .upsert([payloadReducido], { onConflict: 'CUIL' });
+        if (resRed.error) {
+          const resUpd2 = await supabaseClient
+            .from('TURNOS')
+            .update(payloadReducido)
+            .eq('CUIL', cuil)
+            .select();
+          if (!resUpd2.error && Array.isArray(resUpd2.data) && resUpd2.data.length > 0) {
+            resRed = { error: null, data: resUpd2.data };
+          } else {
+            resRed = await supabaseClient.from('TURNOS').insert([payloadReducido]);
+          }
+        }
+        res = resRed;
+      }
+
+      return res;
+    }
+
     function obtenerDatosTurnoCitado(t) {
       let fechaTurno = t['FECHA TURNO'] || t.FECHA_TURNO || '';
       let horaTurno = t['HS TURNO'] || t['HORA TURNO'] || t.HS_TURNO || t.HORA_TURNO || '';
+      let estadoTurno = t['ESTADO TURNO'] || t.ESTADO_TURNO || '';
       const obs = String(t.OBSERVACIONES || '');
+
       const match = obs.match(/\[TURNO CITADO:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}(?::\d{2})?)\]/i);
       if (match) {
         if (!fechaTurno) fechaTurno = match[1];
         if (!horaTurno) horaTurno = match[2];
       }
+
+      const matchEstado = obs.match(/\[ESTADO TURNO:\s*([^\]]+)\]/i);
+      if (matchEstado && !estadoTurno) {
+        estadoTurno = matchEstado[1].trim().toUpperCase();
+      }
+
       return {
         fechaTurno: fechaTurno || '-',
-        horaTurno: horaTurno ? String(horaTurno).slice(0, 5) : '-'
+        horaTurno: horaTurno ? String(horaTurno).slice(0, 5) : '-',
+        estadoTurno: (estadoTurno || '').trim().toUpperCase()
       };
     }
 
@@ -3521,6 +3795,101 @@
       });
     }
 
+    function abrirEvaluacionTurnoPorId(id) {
+      if (!usuarioActual) return;
+      const t = listaTurnos.find(function(item) {
+        return String(item.CUIL) === String(id) || String(item.id) === String(id);
+      });
+      if (!t) return;
+
+      const af = t.afiliados || {};
+      const dt = obtenerDatosTurnoCitado(t);
+      const cuilId = String(t.CUIL || t.id || '').trim();
+
+      document.getElementById('formEvaluacionTurno').reset();
+      document.getElementById('et_id_mov').value = cuilId;
+      document.getElementById('et_info_afiliado').innerHTML =
+        '<b>CUIL (ID):</b> ' + (t.CUIL || '') + (t.id ? ' &nbsp;|&nbsp; <b>Mov. #:</b> ' + t.id : '') + '<br>' +
+        '<b>Afiliado:</b> ' + (af['APELLIDO Y NOMBRE'] || '-') + '<br>' +
+        '<b>Régimen:</b> ' + (af.REGIMEN || '-') + ' &nbsp;|&nbsp; <b>Siglas:</b> ' + (af.SIGLAS || '-') + '<br>' +
+        '<b>Gestión:</b> ' + (af['TIPO DE GESTION'] || '-') + ' &nbsp;|&nbsp; <b>Celular:</b> ' + (af['NRO CELULAR'] || '-');
+
+      poblarSelect('et_operador', OPCIONES_BASE.OPERADOR, '-- Sin asignar --');
+      setSelectValor('et_operador', t.OPERADOR || '');
+      document.getElementById('et_fecha_turno').value = dt.fechaTurno !== '-' ? dt.fechaTurno : '';
+      document.getElementById('et_hora_turno').value = dt.horaTurno !== '-' ? dt.horaTurno : '';
+      setSelectValor('et_estado_turno', dt.estadoTurno || '');
+
+      const obsLimpia = String(t.OBSERVACIONES || '')
+        .replace(/\[ESTADO TURNO:[^\]]*\]/gi, '')
+        .trim();
+      document.getElementById('et_obs').value = obsLimpia;
+      document.getElementById('drawerEvaluacionTurno').classList.add('open');
+    }
+
+    async function guardarEvaluacionTurno(e) {
+      e.preventDefault();
+      if (!supabaseClient || !usuarioActual) return;
+
+      const cuilClave = String(document.getElementById('et_id_mov').value || '').trim();
+      const t = listaTurnos.find(function(item) {
+        return String(item.CUIL || '').trim() === cuilClave || String(item.id) === cuilClave;
+      });
+      if (!t) return;
+
+      const dtOriginal = obtenerDatosTurnoCitado(t);
+      const ope = document.getElementById('et_operador').value.trim() || null;
+      const fecTurnoInput = document.getElementById('et_fecha_turno').value || '';
+      const fecTurno = fecTurnoInput || (dtOriginal.fechaTurno !== '-' ? dtOriginal.fechaTurno : null);
+      const horaRaw = document.getElementById('et_hora_turno').value || '';
+      const hsTurno = horaRaw
+        ? (horaRaw.length === 5 ? horaRaw + ':00' : horaRaw)
+        : (dtOriginal.horaTurno !== '-' ? dtOriginal.horaTurno + ':00' : null);
+      const estadoTurno = document.getElementById('et_estado_turno').value.trim().toUpperCase();
+      const obsBase = document.getElementById('et_obs').value.trim();
+
+      const payload = {
+        'OPERADOR': ope,
+        'FECHA TURNO': fecTurno,
+        'HS TURNO': hsTurno,
+        'ESTADO TURNO': estadoTurno || null,
+        'OBSERVACIONES': obsBase || null
+      };
+
+      let res = await upsertTurnoDesdeMovimiento(t, payload);
+
+      if (res.error) {
+        if (t.id != null) {
+          res = await supabaseClient
+            .from('MOVIMIENTOS DIARIOS')
+            .update(payload)
+            .eq('id', t.id);
+
+          if (res.error && /column|ESTADO TURNO|FECHA TURNO|HS TURNO/i.test(res.error.message || '')) {
+            const obsConEstado = obsBase
+              ? (obsBase + (estadoTurno ? ' [ESTADO TURNO: ' + estadoTurno + ']' : ''))
+              : (estadoTurno ? '[ESTADO TURNO: ' + estadoTurno + ']' : null);
+            const payloadFallback = {
+              'OPERADOR': ope,
+              'OBSERVACIONES': obsConEstado
+            };
+            res = await supabaseClient
+              .from('MOVIMIENTOS DIARIOS')
+              .update(payloadFallback)
+              .eq('id', t.id);
+          }
+        }
+      }
+
+      if (res.error) {
+        mostrarAlerta('Error al guardar evaluación del turno: ' + res.error.message, 'error');
+      } else {
+        mostrarAlerta('Evaluación de turno guardada (' + (estadoTurno || 'SIN ESTADO') + ').', 'success');
+        cerrarDrawers();
+        cargarDatos();
+      }
+    }
+
     function filtrarAgendaTurnos() {
       const fCuil = document.getElementById('f_at_cuil').value.toLowerCase().trim();
       const fNom = document.getElementById('f_at_nombre').value.toLowerCase().trim();
@@ -3528,9 +3897,10 @@
       const fOpe = document.getElementById('f_at_operador').value.toLowerCase();
       const fLoc = document.getElementById('f_at_localidad').value.toLowerCase();
       const fGes = document.getElementById('f_at_gestion').value.toLowerCase();
+      const fEst = (document.getElementById('f_at_estado') ? document.getElementById('f_at_estado').value : '').toUpperCase();
 
       const citados = obtenerListaTurnosCitados();
-      const activos = [fCuil, fNom, fFec, fOpe, fLoc, fGes].filter(Boolean).length;
+      const activos = [fCuil, fNom, fFec, fOpe, fLoc, fGes, fEst].filter(Boolean).length;
       document.getElementById('badgeFiltrosAgendaTurnos').textContent = activos;
       document.getElementById('badgeTotalAgendaTurnos').textContent = citados.length;
 
@@ -3548,23 +3918,26 @@
                (!fFec || datosTurno.fechaTurno === fFec) &&
                (!fOpe || operador === fOpe) &&
                (!fLoc || localidad === fLoc) &&
-               (!fGes || gestion === fGes);
+               (!fGes || gestion === fGes) &&
+               (!fEst || datosTurno.estadoTurno === fEst);
       });
 
       document.getElementById('infoAgendaTurnos').textContent = filtrados.length + ' registros';
       const tbody = document.getElementById('tbodyAgendaTurnos');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:24px; color:#64748b;">No hay registros con TIPO MOVIMIENTO = CITADO en Movimientos Diarios.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:24px; color:#64748b;">No hay registros con TIPO MOVIMIENTO = CITADO en Movimientos Diarios.</td></tr>';
         return;
       }
 
       tbody.innerHTML = filtrados.map(function(t) {
         const af = t.afiliados || {};
         const datosTurno = obtenerDatosTurnoCitado(t);
+        const estClase = datosTurno.estadoTurno === 'ASISTIO' ? 'text-si' :
+                         (datosTurno.estadoTurno ? 'text-no' : '');
         return '<tr>' +
           '<td><input type="checkbox" class="chk-at" /></td>' +
-          '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar Movimiento / Turno">»</td>' +
+          '<td class="cell-action" onclick="abrirEvaluacionTurnoPorId(\'' + String(t.CUIL || t.id || '').replace(/'/g, "\\'") + '\')" title="Evaluar Turno">»</td>' +
           '<td>#' + t.id + '</td>' +
           '<td><b>' + (t.CUIL || '') + '</b></td>' +
           '<td>' + (af['APELLIDO Y NOMBRE'] || '-') + '</td>' +
@@ -3575,6 +3948,7 @@
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
           '<td><b class="text-si">' + datosTurno.fechaTurno + '</b></td>' +
           '<td><b class="text-si">' + (datosTurno.horaTurno !== '-' ? datosTurno.horaTurno + ' hs' : '-') + '</b></td>' +
+          '<td><b class="' + estClase + '">' + (datosTurno.estadoTurno || '-') + '</b></td>' +
           '<td><b>' + (t.OPERADOR || '-') + '</b></td>' +
           '<td>' + (t.FECHA || '-') + '</td>' +
           '<td>' + (t.HORA || '').slice(0, 8) + '</td>' +
@@ -3584,8 +3958,9 @@
     }
 
     function limpiarFiltrosAgendaTurnos() {
-      ['f_at_cuil', 'f_at_nombre', 'f_at_fecha', 'f_at_operador', 'f_at_localidad', 'f_at_gestion'].forEach(function(id) {
-        document.getElementById(id).value = '';
+      ['f_at_cuil', 'f_at_nombre', 'f_at_fecha', 'f_at_operador', 'f_at_localidad', 'f_at_gestion', 'f_at_estado'].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
       });
       filtrarAgendaTurnos();
     }
