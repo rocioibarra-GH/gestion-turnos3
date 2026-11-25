@@ -2385,8 +2385,8 @@
         const nomClean = (item.nombre || '').trim();
         const sigEsc = sigClean.replace(/'/g, "\'");
         const nomEsc = nomClean.replace(/'/g, "\'");
-        return '<div class="combo-item" onclick="seleccionarSiglaCombo('' + sigEsc + '', '' + nomEsc + '')">' +
-          '<b>' + sigClean + '</b>' + (nomClean ? ' - ' + nomClean : '') +
+return '<div class="combo-item" onclick="seleccionarSiglaCombo(\'' + sigEsc + '\', \'' + nomEsc + '\')">' +
+  '<b>' + sigClean + '</b>' + (nomClean ? ' - ' + nomClean : '') +
         '</div>';
       }).join('');
     }
