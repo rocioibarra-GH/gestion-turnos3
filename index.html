@@ -1212,7 +1212,9 @@
                     <th>Correo Electrónico</th>
                     <th>Localidad</th>
                     <th>Régimen</th>
-                    <th>Siglas</th>
+                    <th>Obra Social Actual</th>
+                    <th>Obra Social Anterior</th>
+                    <th>Fecha de Elección</th>
                     <th>Tipo de Gestión</th>
                     <th>Medio de Recepción</th>
                     <th>Operador Carga</th>
@@ -1702,14 +1704,14 @@
           </div>
 
           <div class="form-field" id="campoObraSocialEleccion" style="display:none;">
-            <label>OBRA SOCIAL ELECCION</label>
+            <label>OBRA SOCIAL ACTUAL</label>
             <div class="combo-wrapper" id="siglasComboWrapper">
               <div class="combo-input-row">
                 <input
                   type="text"
                   id="af_siglas_busqueda"
                   autocomplete="off"
-                  placeholder="Escribe sigla o nombre (ej: OSECAC, Comercio...)"
+                  placeholder="Escribe sigla o nombre de obra social actual (ej: OSECAC...)"
                   onfocus="abrirComboSiglas()"
                   oninput="filtrarComboSiglas()"
                 />
@@ -1719,6 +1721,16 @@
               <input type="hidden" id="af_siglas" value="" />
               <div class="combo-dropdown" id="siglasComboDropdown"></div>
             </div>
+          </div>
+
+          <div class="form-field" id="campoObraSocialAnterior">
+            <label>OBRA SOCIAL ANTERIOR</label>
+            <input type="text" id="af_obra_social_anterior" placeholder="Ej: OSECAC, OSDE, PAMI..." />
+          </div>
+
+          <div class="form-field" id="campoFechaEleccion">
+            <label>FECHA DE ELECCION</label>
+            <input type="date" id="af_fecha_eleccion" />
           </div>
 
           <div class="form-field">
@@ -2347,6 +2359,16 @@
       document.getElementById('btnLimpiarSigla').style.display = 'none';
       abrirComboSiglas();
       document.getElementById('af_siglas_busqueda').focus();
+    }
+
+    function obtenerObraSocialAnterior(af) {
+      if (!af) return '';
+      return af['OBRA SOCIAL ANTEROR'] || af['OBRA SOCIAL ANTERIOR'] || '';
+    }
+
+    function obtenerFechaEleccion(af) {
+      if (!af) return '';
+      return af['FECHA DE ELECCION'] || af.FECHA_DE_ELECCION || '';
     }
 
     function setValorSiglaFormulario(sigla) {
@@ -3023,7 +3045,7 @@
       const tbody = document.getElementById('tbodyAfiliados');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
         return;
       }
 
@@ -3040,6 +3062,8 @@
           '<td>' + (af.LOCALIDAD || '-') + '</td>' +
           '<td>' + (af.REGIMEN || '-') + '</td>' +
           '<td>' + (af.SIGLAS || '-') + '</td>' +
+          '<td>' + (obtenerObraSocialAnterior(af) || '-') + '</td>' +
+          '<td>' + (obtenerFechaEleccion(af) || '-') + '</td>' +
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
           '<td>' + (af['MEDIO DE RECEPCION'] || '-') + '</td>' +
           '<td><b>' + (af.OPERADOR || '-') + '</b></td>' +
@@ -3235,6 +3259,8 @@
       if (!usuarioActual) return;
       document.getElementById('formAfiliado').reset();
       setValorSiglaFormulario('');
+      document.getElementById('af_obra_social_anterior').value = '';
+      document.getElementById('af_fecha_eleccion').value = '';
       actualizarVisibilidadObraSocialEleccion(true);
       document.getElementById('af_modo_edicion').value = 'false';
       document.getElementById('af_cuil').readOnly = false;
@@ -3276,6 +3302,8 @@
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
       actualizarVisibilidadObraSocialEleccion(false);
       setValorSiglaFormulario(af.SIGLAS);
+      document.getElementById('af_obra_social_anterior').value = obtenerObraSocialAnterior(af);
+      document.getElementById('af_fecha_eleccion').value = obtenerFechaEleccion(af);
       setSelectValor('af_medio_recepcion', af['MEDIO DE RECEPCION']);
     }
 
@@ -3433,12 +3461,16 @@
       const reg = document.getElementById('af_regimen').value.trim();
       const loc = document.getElementById('af_localidad').value.trim();
       const med = document.getElementById('af_medio_recepcion').value.trim();
+      const osAnt = document.getElementById('af_obra_social_anterior').value.trim().toUpperCase();
+      const fecElec = document.getElementById('af_fecha_eleccion').value || null;
 
       if (cel) payload['NRO CELULAR'] = cel;
       if (cor) payload['CORREO ELECTRONICO'] = cor;
       if (reg) payload['REGIMEN'] = reg;
       if (ges) payload['TIPO DE GESTION'] = ges;
       payload['SIGLAS'] = esOpcionPropia ? (sig || null) : null;
+      payload['OBRA SOCIAL ANTEROR'] = osAnt || null;
+      payload['FECHA DE ELECCION'] = fecElec;
       if (loc) payload['LOCALIDAD'] = loc;
       if (med) payload['MEDIO DE RECEPCION'] = med;
 
@@ -4036,9 +4068,9 @@
           })
         );
       } else {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'Medio Recepcion', 'Operador Carga', 'Fecha', 'Hora']].concat(
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Obra Social Actual', 'Obra Social Anterior', 'Fecha de Eleccion', 'Localidad', 'Tipo Gestion', 'Medio Recepcion', 'Operador Carga', 'Fecha', 'Hora']].concat(
           datos.map(function(a) {
-            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || '', a['MEDIO DE RECEPCION'] || '', a.OPERADOR || '', a.FECHA || '', a.HORA ? String(a.HORA).slice(0, 5) : ''];
+            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', obtenerObraSocialAnterior(a), obtenerFechaEleccion(a), a.LOCALIDAD || '', a['TIPO DE GESTION'] || '', a['MEDIO DE RECEPCION'] || '', a.OPERADOR || '', a.FECHA || '', a.HORA ? String(a.HORA).slice(0, 5) : ''];
           })
         );
       }
