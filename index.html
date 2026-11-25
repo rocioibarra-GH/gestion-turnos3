@@ -1703,15 +1703,15 @@
             </select>
           </div>
 
-          <div class="form-field" id="campoObraSocialEleccion" style="display:none;">
-            <label>OBRA SOCIAL ACTUAL</label>
+          <div class="form-field" id="campoSiglas">
+            <label>SIGLAS (OBRA SOCIAL)</label>
             <div class="combo-wrapper" id="siglasComboWrapper">
               <div class="combo-input-row">
                 <input
                   type="text"
                   id="af_siglas_busqueda"
                   autocomplete="off"
-                  placeholder="Escribe sigla o nombre de obra social actual (ej: OSECAC...)"
+                  placeholder="Escribe sigla o nombre (ej: OSECAC, Comercio...)"
                   onfocus="abrirComboSiglas()"
                   oninput="filtrarComboSiglas()"
                 />
@@ -1723,9 +1723,24 @@
             </div>
           </div>
 
-          <div class="form-field" id="campoObraSocialAnterior">
+          <div class="form-field" id="campoObraSocialAnterior" style="display:none;">
             <label>OBRA SOCIAL ANTERIOR</label>
-            <input type="text" id="af_obra_social_anterior" placeholder="Ej: OSECAC, OSDE, PAMI..." />
+            <div class="combo-wrapper" id="osAnteriorComboWrapper">
+              <div class="combo-input-row">
+                <input
+                  type="text"
+                  id="af_os_anterior_busqueda"
+                  autocomplete="off"
+                  placeholder="Escribe sigla o nombre de obra social anterior..."
+                  onfocus="abrirComboOsAnterior()"
+                  oninput="filtrarComboOsAnterior()"
+                />
+                <button type="button" class="combo-clear-btn" id="btnLimpiarOsAnterior" onclick="limpiarOsAnteriorSeleccionada()" title="Limpiar">×</button>
+                <button type="button" class="combo-arrow-btn" onclick="toggleComboOsAnterior()" title="Ver lista">▼</button>
+              </div>
+              <input type="hidden" id="af_obra_social_anterior" value="" />
+              <div class="combo-dropdown" id="osAnteriorComboDropdown"></div>
+            </div>
           </div>
 
           <div class="form-field" id="campoFechaEleccion">
@@ -2243,6 +2258,10 @@
         if (wrapper && !wrapper.contains(ev.target)) {
           cerrarComboSiglas();
         }
+        const wrapperAnt = document.getElementById('osAnteriorComboWrapper');
+        if (wrapperAnt && !wrapperAnt.contains(ev.target)) {
+          cerrarComboOsAnterior();
+        }
       });
 
       try {
@@ -2278,13 +2297,45 @@
       iniciarApp();
     }
 
-    /* ================= BUSCADOR AUTOCOMPLETABLE DE SIGLAS ================= */
+    /* ================= BUSCADOR AUTOCOMPLETABLE DE SIGLAS Y OBRA SOCIAL ANTERIOR ================= */
     function obtenerCatalogoOS() {
       return listaObrasSociales.length > 0 ? listaObrasSociales : OPCIONES_BASE.SIGLAS_FALLBACK;
     }
 
+    function formatearEtiquetaOS(item) {
+      const sigClean = (item.sigla || '').trim().toUpperCase();
+      const nomClean = (item.nombre || '').trim();
+      return nomClean ? (sigClean + ' - ' + nomClean) : sigClean;
+    }
+
+    function buscarCoincidenciaOS(texto) {
+      const limpio = (texto || '').trim();
+      if (!limpio) return null;
+      const upper = limpio.toUpperCase();
+      const catalogo = obtenerCatalogoOS();
+
+      let encontrada = catalogo.find(function(item) {
+        const sig = (item.sigla || '').trim().toUpperCase();
+        const etq = formatearEtiquetaOS(item).toUpperCase();
+        return sig === upper || etq === upper;
+      });
+      if (encontrada) return encontrada;
+
+      const idxGuion = limpio.indexOf(' - ');
+      if (idxGuion !== -1) {
+        const posibleSigla = limpio.slice(0, idxGuion).trim().toUpperCase();
+        encontrada = catalogo.find(function(item) {
+          return (item.sigla || '').trim().toUpperCase() === posibleSigla;
+        });
+        if (encontrada) return encontrada;
+      }
+      return null;
+    }
+
     function abrirComboSiglas() {
-      renderizarOpcionesCombo(document.getElementById('af_siglas_busqueda').value);
+      const inp = document.getElementById('af_siglas_busqueda');
+      const coinc = buscarCoincidenciaOS(inp.value);
+      renderizarOpcionesCombo(coinc ? '' : inp.value);
       document.getElementById('siglasComboDropdown').classList.add('open');
     }
 
@@ -2307,15 +2358,12 @@
       const texto = document.getElementById('af_siglas_busqueda').value;
       document.getElementById('btnLimpiarSigla').style.display = texto ? 'block' : 'none';
 
-      const catalogo = obtenerCatalogoOS();
-      const coincidenciaExacta = catalogo.find(function(item) {
-        return (item.sigla || '').trim().toUpperCase() === texto.trim().toUpperCase();
-      });
-      document.getElementById('af_siglas').value = coincidenciaExacta
-        ? coincidenciaExacta.sigla.trim().toUpperCase()
+      const coinc = buscarCoincidenciaOS(texto);
+      document.getElementById('af_siglas').value = coinc
+        ? (coinc.sigla || '').trim().toUpperCase()
         : '';
 
-      renderizarOpcionesCombo(texto);
+      renderizarOpcionesCombo(coinc ? '' : texto);
       document.getElementById('siglasComboDropdown').classList.add('open');
     }
 
@@ -2327,7 +2375,8 @@
       const coincidencias = catalogo.filter(function(item) {
         const sig = (item.sigla || '').toLowerCase();
         const nom = (item.nombre || '').toLowerCase();
-        return !q || sig.indexOf(q) !== -1 || nom.indexOf(q) !== -1;
+        const etq = formatearEtiquetaOS(item).toLowerCase();
+        return !q || sig.indexOf(q) !== -1 || nom.indexOf(q) !== -1 || etq.indexOf(q) !== -1;
       });
 
       if (coincidencias.length === 0) {
@@ -2361,6 +2410,104 @@
       document.getElementById('af_siglas_busqueda').focus();
     }
 
+    /* Combo OBRA SOCIAL ANTERIOR (enlazado a obras_sociales, visible solo en OPCION C/PROPIA) */
+    function abrirComboOsAnterior() {
+      const inp = document.getElementById('af_os_anterior_busqueda');
+      const coinc = buscarCoincidenciaOS(inp.value);
+      renderizarOpcionesOsAnterior(coinc ? '' : inp.value);
+      document.getElementById('osAnteriorComboDropdown').classList.add('open');
+    }
+
+    function cerrarComboOsAnterior() {
+      const dd = document.getElementById('osAnteriorComboDropdown');
+      if (dd) dd.classList.remove('open');
+    }
+
+    function toggleComboOsAnterior() {
+      const dd = document.getElementById('osAnteriorComboDropdown');
+      if (dd.classList.contains('open')) {
+        cerrarComboOsAnterior();
+      } else {
+        abrirComboOsAnterior();
+        document.getElementById('af_os_anterior_busqueda').focus();
+      }
+    }
+
+    function filtrarComboOsAnterior() {
+      const texto = document.getElementById('af_os_anterior_busqueda').value;
+      document.getElementById('btnLimpiarOsAnterior').style.display = texto ? 'block' : 'none';
+
+      const coinc = buscarCoincidenciaOS(texto);
+      document.getElementById('af_obra_social_anterior').value = coinc
+        ? (coinc.sigla || '').trim().toUpperCase()
+        : '';
+
+      renderizarOpcionesOsAnterior(coinc ? '' : texto);
+      document.getElementById('osAnteriorComboDropdown').classList.add('open');
+    }
+
+    function renderizarOpcionesOsAnterior(filtroTexto) {
+      const dd = document.getElementById('osAnteriorComboDropdown');
+      const q = (filtroTexto || '').trim().toLowerCase();
+      const catalogo = obtenerCatalogoOS();
+
+      const coincidencias = catalogo.filter(function(item) {
+        const sig = (item.sigla || '').toLowerCase();
+        const nom = (item.nombre || '').toLowerCase();
+        const etq = formatearEtiquetaOS(item).toLowerCase();
+        return !q || sig.indexOf(q) !== -1 || nom.indexOf(q) !== -1 || etq.indexOf(q) !== -1;
+      });
+
+      if (coincidencias.length === 0) {
+        dd.innerHTML = '<div class="combo-empty">No se encontraron obras sociales con "' + filtroTexto + '"</div>';
+        return;
+      }
+
+      dd.innerHTML = coincidencias.slice(0, 120).map(function(item) {
+        const sigClean = (item.sigla || '').trim().toUpperCase();
+        const nomClean = (item.nombre || '').trim();
+        const sigEsc = sigClean.replace(/'/g, "\\'");
+        const nomEsc = nomClean.replace(/'/g, "\\'");
+        return '<div class="combo-item" onclick="seleccionarOsAnteriorCombo(\'' + sigEsc + '\', \'' + nomEsc + '\')">' +
+          '<b>' + sigClean + '</b>' + (nomClean ? ' - ' + nomClean : '') +
+        '</div>';
+      }).join('');
+    }
+
+    function seleccionarOsAnteriorCombo(sigla, nombre) {
+      document.getElementById('af_obra_social_anterior').value = sigla;
+      document.getElementById('af_os_anterior_busqueda').value = nombre ? (sigla + ' - ' + nombre) : sigla;
+      document.getElementById('btnLimpiarOsAnterior').style.display = 'block';
+      cerrarComboOsAnterior();
+    }
+
+    function limpiarOsAnteriorSeleccionada() {
+      document.getElementById('af_obra_social_anterior').value = '';
+      document.getElementById('af_os_anterior_busqueda').value = '';
+      document.getElementById('btnLimpiarOsAnterior').style.display = 'none';
+      abrirComboOsAnterior();
+      document.getElementById('af_os_anterior_busqueda').focus();
+    }
+
+    function setValorOsAnteriorFormulario(sigla) {
+      if (!sigla) {
+        document.getElementById('af_obra_social_anterior').value = '';
+        document.getElementById('af_os_anterior_busqueda').value = '';
+        document.getElementById('btnLimpiarOsAnterior').style.display = 'none';
+        return;
+      }
+      const sigUpper = sigla.trim().toUpperCase();
+      const catalogo = obtenerCatalogoOS();
+      const encontrada = catalogo.find(function(o) {
+        return (o.sigla || '').trim().toUpperCase() === sigUpper;
+      });
+      document.getElementById('af_obra_social_anterior').value = sigUpper;
+      document.getElementById('af_os_anterior_busqueda').value = encontrada
+        ? formatearEtiquetaOS(encontrada)
+        : sigUpper;
+      document.getElementById('btnLimpiarOsAnterior').style.display = 'block';
+    }
+
     function obtenerObraSocialAnterior(af) {
       if (!af) return '';
       return af['OBRA SOCIAL ANTEROR'] || af['OBRA SOCIAL ANTERIOR'] || '';
@@ -2384,13 +2531,13 @@
         return (o.sigla || '').trim().toUpperCase() === sigUpper;
       });
       document.getElementById('af_siglas').value = sigUpper;
-      document.getElementById('af_siglas_busqueda').value = (encontrada && encontrada.nombre)
-        ? (sigUpper + ' - ' + encontrada.nombre)
+      document.getElementById('af_siglas_busqueda').value = encontrada
+        ? formatearEtiquetaOS(encontrada)
         : sigUpper;
       document.getElementById('btnLimpiarSigla').style.display = 'block';
     }
 
-    /* ================= VISIBILIDAD DE SIGLAS (OBRA SOCIAL ELECCION) ================= */
+    /* ================= VISIBILIDAD DE OBRA SOCIAL ANTERIOR (OPCION C/PROPIA) ================= */
     function esGestionOpcionConPropia() {
       const sel = document.getElementById('af_gestion');
       const val = ((sel && sel.value) || '').trim().toUpperCase();
@@ -2398,14 +2545,14 @@
     }
 
     function actualizarVisibilidadObraSocialEleccion(limpiarSiOculto) {
-      const cont = document.getElementById('campoObraSocialEleccion');
-      if (!cont) return;
-      const mostrar = esGestionOpcionConPropia();
-      cont.style.display = mostrar ? 'block' : 'none';
-      if (!mostrar) {
-        cerrarComboSiglas();
+      const contAnt = document.getElementById('campoObraSocialAnterior');
+      if (!contAnt) return;
+      const mostrarAnt = esGestionOpcionConPropia();
+      contAnt.style.display = mostrarAnt ? 'block' : 'none';
+      if (!mostrarAnt) {
+        cerrarComboOsAnterior();
         if (limpiarSiOculto !== false) {
-          setValorSiglaFormulario('');
+          setValorOsAnteriorFormulario('');
         }
       }
     }
@@ -3259,7 +3406,7 @@
       if (!usuarioActual) return;
       document.getElementById('formAfiliado').reset();
       setValorSiglaFormulario('');
-      document.getElementById('af_obra_social_anterior').value = '';
+      setValorOsAnteriorFormulario('');
       document.getElementById('af_fecha_eleccion').value = '';
       actualizarVisibilidadObraSocialEleccion(true);
       document.getElementById('af_modo_edicion').value = 'false';
@@ -3302,7 +3449,7 @@
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
       actualizarVisibilidadObraSocialEleccion(false);
       setValorSiglaFormulario(af.SIGLAS);
-      document.getElementById('af_obra_social_anterior').value = obtenerObraSocialAnterior(af);
+      setValorOsAnteriorFormulario(obtenerObraSocialAnterior(af));
       document.getElementById('af_fecha_eleccion').value = obtenerFechaEleccion(af);
       setSelectValor('af_medio_recepcion', af['MEDIO DE RECEPCION']);
     }
@@ -3439,14 +3586,18 @@
 
       const ges = document.getElementById('af_gestion').value.trim();
       const esOpcionPropia = ges.toUpperCase() === 'OPCION C/PROPIA' || ges.toUpperCase() === 'OPCIÓN C/PROPIA';
-      const textoBusquedaSigla = esOpcionPropia ? document.getElementById('af_siglas_busqueda').value.trim() : '';
-      const sig = esOpcionPropia ? document.getElementById('af_siglas').value.trim() : '';
 
-      if (esOpcionPropia && textoBusquedaSigla && !sig) {
-        mostrarAlerta('Selecciona una obra social válida de la lista desplegable.', 'error');
-        abrirComboSiglas();
-        return;
-      }
+      const textoBusquedaSigla = document.getElementById('af_siglas_busqueda').value.trim();
+      const coincSigla = buscarCoincidenciaOS(textoBusquedaSigla);
+      const sig = (coincSigla ? (coincSigla.sigla || '').trim().toUpperCase() : document.getElementById('af_siglas').value.trim().toUpperCase())
+        || (textoBusquedaSigla ? textoBusquedaSigla.toUpperCase() : '');
+
+      const textoBusquedaAnt = esOpcionPropia ? document.getElementById('af_os_anterior_busqueda').value.trim() : '';
+      const coincAnt = esOpcionPropia ? buscarCoincidenciaOS(textoBusquedaAnt) : null;
+      const osAnt = esOpcionPropia
+        ? ((coincAnt ? (coincAnt.sigla || '').trim().toUpperCase() : document.getElementById('af_obra_social_anterior').value.trim().toUpperCase())
+           || (textoBusquedaAnt ? textoBusquedaAnt.toUpperCase() : ''))
+        : '';
 
       const esEdicion = document.getElementById('af_modo_edicion').value === 'true';
       const cuil = document.getElementById('af_cuil').value.trim();
@@ -3461,15 +3612,14 @@
       const reg = document.getElementById('af_regimen').value.trim();
       const loc = document.getElementById('af_localidad').value.trim();
       const med = document.getElementById('af_medio_recepcion').value.trim();
-      const osAnt = document.getElementById('af_obra_social_anterior').value.trim().toUpperCase();
       const fecElec = document.getElementById('af_fecha_eleccion').value || null;
 
       if (cel) payload['NRO CELULAR'] = cel;
       if (cor) payload['CORREO ELECTRONICO'] = cor;
       if (reg) payload['REGIMEN'] = reg;
       if (ges) payload['TIPO DE GESTION'] = ges;
-      payload['SIGLAS'] = esOpcionPropia ? (sig || null) : null;
-      payload['OBRA SOCIAL ANTEROR'] = osAnt || null;
+      payload['SIGLAS'] = sig || null;
+      payload['OBRA SOCIAL ANTEROR'] = esOpcionPropia ? (osAnt || null) : null;
       payload['FECHA DE ELECCION'] = fecElec;
       if (loc) payload['LOCALIDAD'] = loc;
       if (med) payload['MEDIO DE RECEPCION'] = med;
