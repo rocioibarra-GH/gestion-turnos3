@@ -1061,7 +1061,7 @@
         </div>
         <div class="nav-item sub-item" id="nav-movimientos" onclick="cambiarVista('movimientos')">
           <span class="nav-icon">🔁</span>
-          <span class="nav-label">Movimientos</span>
+          <span class="nav-label">Modificar Registros</span>
         </div>
 
         <div class="nav-item" onclick="abrirDrawerAfiliado()">
@@ -1173,7 +1173,7 @@
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
               <button type="button" class="tool-btn" onclick="cambiarVista('sondeos')" title="Ver Sondeos">📊</button>
-              <button type="button" class="tool-btn" onclick="cambiarVista('movimientos')" title="Ver Movimientos">🔁</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('movimientos')" title="Ver Modificar Registros">🔁</button>
               <button type="button" class="tool-btn" onclick="abrirDrawerAfiliado()" title="Nuevo Dato">
                 ⚑
                 <span class="tool-badge" id="badgeTotalAfiliados">0</span>
@@ -1400,8 +1400,8 @@
         <section id="vistaMovimientos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
-            <button type="button" class="btn-pill" onclick="sincronizarMovimientosDesdeAfiliados(true)">🔄 Sincronizar Movimientos</button>
-            <button type="button" class="btn-pill" onclick="exportarCSV('movimientos')">Exportar Movimientos CSV ⤓</button>
+            <button type="button" class="btn-pill" onclick="sincronizarMovimientosDesdeAfiliados(true)">🔄 Sincronizar Modificar Registros</button>
+            <button type="button" class="btn-pill" onclick="exportarCSV('movimientos')">Exportar Modificar Registros CSV ⤓</button>
           </div>
 
           <div class="filters-grid">
@@ -1450,7 +1450,7 @@
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
               <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
-              <button type="button" class="tool-btn" title="Total Movimientos">
+              <button type="button" class="tool-btn" title="Total Modificar Registros">
                 ⚑
                 <span class="tool-badge" id="badgeTotalMovimientos">0</span>
               </button>
@@ -1458,7 +1458,7 @@
                 ▼
                 <span class="tool-badge" id="badgeFiltrosMovimientos">0</span>
               </button>
-              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('movimientos')" title="Exportar Movimientos CSV">⤓</button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('movimientos')" title="Exportar Modificar Registros CSV">⤓</button>
               <div class="toolbar-right-info" id="infoMovimientos">0 registros</div>
             </div>
 
@@ -1827,7 +1827,7 @@
     const CORREO_RECUPERO_DEFAULT = 'rocio.ibarra@ossacra.org.ar';
 
     const GESTIONES_SONDEO = ['OPCION DE CAMBIO', 'ALTA DIRECTA', 'PREPAGO'];
-    const GESTIONES_MOVIMIENTOS = ['BAJA', 'CAMBIO DE PLAN', 'BAJA DE PLAN', 'MODIFICAR REGISTRO'];
+    const GESTIONES_MOVIMIENTOS = ['BAJA', 'BAJA ADH', 'CAMBIO DE PLAN', 'BAJA DE PLAN', 'MODIFICAR REGISTRO'];
     const ASIGNADORES_SONDEO = ['BRIOS', 'RIBARRA', 'ASANDOVAL'];
 
     let supabaseClient = null;
@@ -1933,15 +1933,12 @@
         'LMANCEDO'
       ],
       TIPO_GESTION: [
-        'ACTIVO',
         'ALTA',
-        'ALTA DIRECTA',
+        'BAJA',
         'PREPAGO',
         'OPCION DE CAMBIO',
         'OPCION C/PROPIA',
-        'INCORPORACION DE ADH',
-        'BAJA',
-        'BAJA ADH',
+        'ALTA DIRECTA',
         'CAMBIO DE PLAN',
         'BAJA DE PLAN',
         'REACTIVACION',
@@ -2404,7 +2401,7 @@
       } else if (vista === 'sondeos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Sondeos</span>';
       } else if (vista === 'movimientos') {
-        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Movimientos</span>';
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Modificar Registros</span>';
       } else {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
       }
@@ -2594,7 +2591,7 @@
       });
 
       if (mostrarMensajeManual) {
-        mostrarAlerta('Movimientos sincronizados: ' + listaMovimientos.length + ' registros encontrados.', 'success');
+        mostrarAlerta('Modificar Registros sincronizados: ' + listaMovimientos.length + ' registros encontrados.', 'success');
         filtrarMovimientos();
       }
     }
@@ -2856,7 +2853,7 @@
       const tbody = document.getElementById('tbodyMovimientos');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:24px; color:#64748b;">No hay registros con BAJA, CAMBIO DE PLAN, BAJA DE PLAN o MODIFICAR REGISTRO en Base de Datos.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding:24px; color:#64748b;">No hay registros con BAJA, BAJA ADH, CAMBIO DE PLAN, BAJA DE PLAN o MODIFICAR REGISTRO en Base de Datos.</td></tr>';
         return;
       }
 
