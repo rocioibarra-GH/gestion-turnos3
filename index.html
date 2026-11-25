@@ -1053,7 +1053,7 @@
         </div>
         <div class="nav-item sub-item" id="nav-turnos" onclick="cambiarVista('turnos')">
           <span class="nav-icon">📅</span>
-          <span class="nav-label">Turnos y Solicitudes</span>
+          <span class="nav-label">Movimientos Diarios</span>
         </div>
         <div class="nav-item sub-item" id="nav-sondeos" onclick="cambiarVista('sondeos')">
           <span class="nav-icon">📊</span>
@@ -1063,6 +1063,10 @@
           <span class="nav-icon">🔁</span>
           <span class="nav-label">Modificar Registros</span>
         </div>
+        <div class="nav-item sub-item" id="nav-agenda-turnos" onclick="cambiarVista('agenda_turnos')">
+          <span class="nav-icon">🗓️</span>
+          <span class="nav-label">Turnos</span>
+        </div>
 
         <div class="nav-item" onclick="abrirDrawerAfiliado()">
           <span class="nav-icon">👤</span>
@@ -1070,7 +1074,7 @@
         </div>
         <div class="nav-item" onclick="abrirDrawerTurno()">
           <span class="nav-icon">➕</span>
-          <span class="nav-label">Asignar Turno</span>
+          <span class="nav-label">Nuevo Mov. Diario</span>
         </div>
         <div class="nav-item" onclick="cargarDatos()">
           <span class="nav-icon">🔄</span>
@@ -1167,6 +1171,12 @@
                 <option value="">Todas</option>
               </select>
             </div>
+            <div class="outlined-field">
+              <label>Operador Carga</label>
+              <select id="f_af_operador" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
           </div>
 
           <div class="grid-card">
@@ -1205,6 +1215,7 @@
                     <th>Siglas</th>
                     <th>Tipo de Gestión</th>
                     <th>Medio de Recepción</th>
+                    <th>Operador Carga</th>
                     <th>Fecha</th>
                     <th>Hora</th>
                   </tr>
@@ -1217,7 +1228,7 @@
           </div>
         </section>
 
-        <!-- VISTA 2: TURNOS -->
+        <!-- VISTA 2: MOVIMIENTOS DIARIOS -->
         <section id="vistaTurnos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
@@ -1226,7 +1237,7 @@
 
           <div class="filters-grid">
             <div class="outlined-field">
-              <label>Estado</label>
+              <label>Tipo Movimiento</label>
               <select id="f_tu_estado" onchange="filtrarTurnos()">
                 <option value="">Todos</option>
               </select>
@@ -1261,7 +1272,7 @@
             <div class="grid-toolbar">
               <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
               <button type="button" class="tool-btn" onclick="cambiarVista('afiliados')" title="Ver Base de Datos">▥</button>
-              <button type="button" class="tool-btn" onclick="abrirDrawerTurno()" title="Nuevo Turno">
+              <button type="button" class="tool-btn" onclick="abrirDrawerTurno()" title="Nuevo Movimiento Diario">
                 ⚑
                 <span class="tool-badge" id="badgeTotalTurnos">0</span>
               </button>
@@ -1285,7 +1296,7 @@
                     <th>Acceso</th>
                     <th>Fecha</th>
                     <th>Hora</th>
-                    <th>Estado</th>
+                    <th>Tipo Movimiento</th>
                     <th>Afiliado Cargado</th>
                     <th>ID</th>
                     <th>Cuil - Titular</th>
@@ -1295,10 +1306,11 @@
                     <th>Siglas</th>
                     <th>Tipo de Gestión</th>
                     <th>Operador</th>
+                    <th>Observaciones</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyTurnos">
-                  <tr><td colspan="14" style="text-align:center; padding:30px; color:#64748b;">Cargando turnos...</td></tr>
+                  <tr><td colspan="15" style="text-align:center; padding:30px; color:#64748b;">Cargando movimientos diarios...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1396,7 +1408,94 @@
           </div>
         </section>
 
-        <!-- VISTA 4: MOVIMIENTOS -->
+        <!-- VISTA 5: TURNOS (ORIGINADOS DESDE MOVIMIENTOS DIARIOS CON TIPO CITADO) -->
+        <section id="vistaAgendaTurnos" style="display:none;">
+          <div class="action-bar">
+            <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
+            <button type="button" class="btn-pill" onclick="cambiarVista('turnos')">📅 Ir a Movimientos Diarios</button>
+            <button type="button" class="btn-pill" onclick="exportarCSV('agenda_turnos')">Exportar Turnos CSV ⤓</button>
+          </div>
+
+          <div class="filters-grid">
+            <div class="outlined-field">
+              <label>Cuil - Titular</label>
+              <input type="text" id="f_at_cuil" placeholder="Buscar por CUIL..." oninput="filtrarAgendaTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Apellido y Nombre</label>
+              <input type="text" id="f_at_nombre" placeholder="Buscar afiliado..." oninput="filtrarAgendaTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Fecha Turno</label>
+              <input type="date" id="f_at_fecha" onchange="filtrarAgendaTurnos()" />
+            </div>
+            <div class="outlined-field">
+              <label>Operador</label>
+              <select id="f_at_operador" onchange="filtrarAgendaTurnos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Localidad</label>
+              <select id="f_at_localidad" onchange="filtrarAgendaTurnos()">
+                <option value="">Todas</option>
+              </select>
+            </div>
+            <div class="outlined-field">
+              <label>Tipo de Gestión</label>
+              <select id="f_at_gestion" onchange="filtrarAgendaTurnos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-card">
+            <div class="grid-toolbar">
+              <button type="button" class="tool-btn" onclick="cargarDatos()" title="Actualizar datos">↻</button>
+              <button type="button" class="tool-btn" onclick="cambiarVista('turnos')" title="Ver Movimientos Diarios">📅</button>
+              <button type="button" class="tool-btn" title="Total Turnos">
+                ⚑
+                <span class="tool-badge" id="badgeTotalAgendaTurnos">0</span>
+              </button>
+              <button type="button" class="tool-btn" onclick="limpiarFiltrosAgendaTurnos()" title="Limpiar filtros">
+                ▼
+                <span class="tool-badge" id="badgeFiltrosAgendaTurnos">0</span>
+              </button>
+              <button type="button" class="tool-btn active-tool" onclick="exportarCSV('agenda_turnos')" title="Exportar Turnos CSV">⤓</button>
+              <div class="toolbar-right-info" id="infoAgendaTurnos">0 registros</div>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:36px;"><input type="checkbox" onclick="seleccionarTodos(this, 'chk-at')" /></th>
+                    <th>Editar</th>
+                    <th>ID Mov.</th>
+                    <th>Cuil - Titular</th>
+                    <th>Apellido y Nombre</th>
+                    <th>Nro Celular</th>
+                    <th>Localidad</th>
+                    <th>Régimen</th>
+                    <th>Siglas</th>
+                    <th>Tipo de Gestión</th>
+                    <th>FECHA TURNO</th>
+                    <th>HORA TURNO</th>
+                    <th>OPERADOR</th>
+                    <th>FECHA CARGA</th>
+                    <th>HORA CARGA</th>
+                    <th>OBSERVACIONES</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyAgendaTurnos">
+                  <tr><td colspan="16" style="text-align:center; padding:30px; color:#64748b;">No hay turnos (CITADO) registrados aún.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+                <!-- VISTA 4: MOVIMIENTOS -->
         <section id="vistaMovimientos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
@@ -1769,11 +1868,11 @@
     </div>
   </div>
 
-  <!-- DRAWER: ASIGNAR TURNO -->
+  <!-- DRAWER: MOVIMIENTOS DIARIOS -->
   <div class="drawer-overlay" id="drawerTurno">
     <div class="drawer-panel">
       <div class="drawer-header">
-        <h3>Asignar / Editar Turno</h3>
+        <h3 id="tituloDrawerMovDiario">Nuevo Movimiento Diario</h3>
         <button type="button" class="drawer-close" onclick="cerrarDrawers()">×</button>
       </div>
       <form id="formTurno" onsubmit="guardarTurno(event)" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
@@ -1787,21 +1886,42 @@
             </select>
           </div>
 
-          <div class="form-field">
-            <label>FECHA *</label>
-            <input type="date" id="tu_fecha" required />
+          <div class="two-col-row">
+            <div class="form-field">
+              <label>FECHA (SISTEMA)</label>
+              <input type="date" id="tu_fecha" readonly required />
+              <span class="hint-lock">Automática del sistema; no editable al guardar.</span>
+            </div>
+
+            <div class="form-field">
+              <label>HORA (SISTEMA)</label>
+              <input type="text" id="tu_hora" readonly required />
+              <span class="hint-lock">Automática del sistema; no editable al guardar.</span>
+            </div>
           </div>
 
           <div class="form-field">
-            <label>HORA *</label>
-            <input type="time" id="tu_hora" required />
-          </div>
-
-          <div class="form-field">
-            <label>ESTADO</label>
-            <select id="tu_estado">
-              <option value="">-- Seleccionar Estado --</option>
+            <label>TIPO MOVIMIENTO *</label>
+            <select id="tu_estado" required onchange="actualizarCamposCitado()">
+              <option value="">-- Seleccionar Tipo Movimiento --</option>
             </select>
+          </div>
+
+          <div id="bloqueCamposCitado" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:0.78rem; font-weight:700; color:#0d4b84; margin-bottom:10px;">
+              DATOS DE TURNO (HABILITADO POR TIPO: CITADO)
+            </div>
+            <div class="two-col-row">
+              <div class="form-field" style="margin-bottom:6px;">
+                <label for="tu_fecha_turno">FECHA TURNO (MANUAL) *</label>
+                <input type="date" id="tu_fecha_turno" />
+              </div>
+              <div class="form-field" style="margin-bottom:6px;">
+                <label for="tu_hora_turno">HORA TURNO (MANUAL) *</label>
+                <input type="time" id="tu_hora_turno" />
+              </div>
+            </div>
+            <span class="hint-lock">Al guardar con TIPO MOVIMIENTO = CITADO, se refleja automáticamente en la vista Turnos.</span>
           </div>
 
           <div class="form-field">
@@ -1810,11 +1930,16 @@
               <option value="">-- Seleccionar Operador --</option>
             </select>
           </div>
+
+          <div class="form-field">
+            <label>OBSERVACIONES</label>
+            <textarea id="tu_observaciones" placeholder="Detalle del movimiento diario..."></textarea>
+          </div>
         </div>
 
         <div class="drawer-footer">
           <button type="button" class="btn-cancel" onclick="cerrarDrawers()">Cancelar</button>
-          <button type="submit" class="btn-pill">Guardar Turno ›</button>
+          <button type="submit" class="btn-pill">Guardar Movimiento ›</button>
         </div>
       </form>
     </div>
@@ -1841,134 +1966,139 @@
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
 
+    // Catálogos cargados dinámicamente desde Supabase (sin constantes quemadas)
     const OPCIONES_BASE = {
-      REGIMEN: [
-        'MONOTRIBUTO',
-        'MONOT. SOCIAL',
-        'S. DOMESTICO',
-        'REG. GENERAL',
-        'ADH. ORIGEN',
-        'DESEMPLEO',
-        'MONOT D',
-        'MONOT E',
-        'MONOT F',
-        'MONOT G',
-        'MONOT H',
-        'MONOT I',
-        'JUBILADO'
-      ],
-      SIGLAS_FALLBACK: [
-        { sigla: 'OSSACRA', nombre: 'Obra Social de la Asociación Civil Prosindicato de Amas de Casa' },
-        { sigla: 'OSSIMRA', nombre: 'Obra Social del Personal de Supervisores de la Industria Metalmecánica' },
-        { sigla: 'OSPACP', nombre: 'Obra Social del Personal Auxiliar de Casas Particulares' },
-        { sigla: 'OSECAC', nombre: 'Obra Social de los Empleados de Comercio y Actividades Civiles' },
-        { sigla: 'OSPS MERCEDES', nombre: 'Obra Social del Personal de Seguridad' },
-        { sigla: 'OSPSIP', nombre: 'Obra Social del Personal de Seguridad Comercial, Industrial e Investigaciones Privadas' },
-        { sigla: 'ASSPE', nombre: 'Asociación Mutual' },
-        { sigla: 'OSPLAD', nombre: 'Obra Social para la Actividad Docente' },
-        { sigla: 'OSPM', nombre: 'Obra Social del Personal Marítimo' },
-        { sigla: 'OSPCN', nombre: 'Obra Social del Personal Civil de la Nación' },
-        { sigla: 'ARPSALUD', nombre: 'ARP Salud' },
-        { sigla: 'ANDAR', nombre: 'Obra Social de Viajantes Vendedores de la República Argentina' },
-        { sigla: 'AMPES', nombre: 'Asociación Mutual del Personal de Participantes de Economía Solidaria' },
-        { sigla: 'SANCOR', nombre: 'Asociación Mutual Sancor Salud' }
-      ],
-      LOCALIDAD: [
-        'CORRIENTES',
-        '9 DE JULIO',
-        'ALVEAR',
-        'BELLA VISTA',
-        'BERON DE ASTRADA',
-        'BONPLAND',
-        'CAZADORES CORRENTINOS',
-        'CAA CATI',
-        'ECHAVARRIA',
-        'CHAVARRIA',
-        'PELLEGRINI',
-        'COLONIA CAROLINA',
-        'COLONIA LIBERTAD',
-        'COLONIA LIEBIG',
-        'COLONIA PANDO',
-        'CONCEPCION',
-        'CRUZ DE LOS MILAGROS',
-        'CURUZU CUATIA',
-        'EL SOMBRERO',
-        'EL CAIMAN',
-        'EMPEDRADO',
-        'ESQUINA',
-        'GOYA',
-        'LORETO',
-        'PASO DE LOS LIBRES',
-        'VIRASORO',
-        'JUAN PUJOL',
-        'MOCORETA',
-        'RIACHUELO',
-        'MONTE CASEROS',
-        'SANTA LUCIA'
-      ],
-      ESTADO: [
-        'COORDINAR TURNO',
-        'TURNO',
-        'INTRANET',
-        'AT. ESPONTANEA',
-        'BOT',
-        'GESTOS',
-        'LLAMADA',  
-        'NO ASISTIO',
-        'NO REALIZO FILIATORIO',
-        'SIN DOCUMENTACION',
-        'CAMBIO TURNO',
-        'REASIGNAR TURNO',
-        'CERRADO'
-      ],
-      OPERADOR: [
-        'ASANDOVAL',
-        'BRIOS',
-        'BMONZON',
-        'DSOSA',
-        'GOVIEDO',
-        'MANZOTEGUI',
-        'RIBARRA',
-        'RAGUAYO',
-        'LMANCEDO'
-      ],
-      TIPO_GESTION: [
-        'ALTA',
-        'BAJA',
-        'PREPAGO',
-        'OPCION DE CAMBIO',
-        'OPCION C/PROPIA',
-        'ALTA DIRECTA',
-        'CAMBIO DE PLAN',
-        'BAJA DE PLAN',
-        'REACTIVACION',
-        'MODIFICAR REGISTRO',
-        'BLOQUEO/DESBLOQUEO',
-        'CALCULO DEUDA',
-        'CONVENIO DE PAGO'
-      ],
-      MEDIO_RECEPCION: [
-        'WHATSAPP',
-        'LLAMADA',
-        'CORREO',
-        'BOT',
-        'AT. ESPONTANEA',
-        'INTERNACION',
-        '0800',
-        'LEGALES'
-      ],
-      PATOLOGIAS: [
-        'HIPERTENSION',
-        'DIABLETES',
-        'OBESIDAD',
-        'EMBARAZO',
-        'CUD',
-        'B24',
-        'CA',
-        'NINGUNO',
-        'OTROS'
-      ]
+      REGIMEN: [],
+      SIGLAS_FALLBACK: [],
+      LOCALIDAD: [],
+      ESTADO: [],
+      OPERADOR: [],
+      TIPO_GESTION: [],
+      MEDIO_RECEPCION: [],
+      PATOLOGIAS: [],
+      AVANZA: [],
+      MOVI: []
     };
+
+    function normalizarValoresEnum(raw) {
+      if (!raw) return [];
+      if (Array.isArray(raw)) {
+        return raw.map(function(v) { return String(v || '').trim(); }).filter(Boolean);
+      }
+      if (typeof raw === 'string') {
+        const limpio = raw.replace(/^\{|\}$/g, '').trim();
+        if (!limpio) return [];
+        return limpio.split(',').map(function(v) {
+          return v.replace(/^"|"$/g, '').trim();
+        }).filter(Boolean);
+      }
+      return [];
+    }
+
+    function extraerValoresDeFilas(filas, columnas) {
+      const setVals = new Set();
+      (filas || []).forEach(function(row) {
+        columnas.forEach(function(col) {
+          const val = row && row[col];
+          if (val == null) return;
+          if (typeof val === 'string' && val.indexOf(',') !== -1 && (col === 'CUADRO CLINICO' || col === 'PATOLOGIAS')) {
+            val.split(',').forEach(function(part) {
+              const p = part.trim();
+              if (p) setVals.add(p);
+            });
+          } else {
+            const s = String(val).trim();
+            if (s) setVals.add(s);
+          }
+        });
+      });
+      return Array.from(setVals).sort(function(a, b) { return a.localeCompare(b); });
+    }
+
+    async function cargarCatalogosDesdeSupabase() {
+      OPCIONES_BASE.REGIMEN = [];
+      OPCIONES_BASE.LOCALIDAD = [];
+      OPCIONES_BASE.ESTADO = [];
+      OPCIONES_BASE.OPERADOR = [];
+      OPCIONES_BASE.TIPO_GESTION = [];
+      OPCIONES_BASE.MEDIO_RECEPCION = [];
+      OPCIONES_BASE.PATOLOGIAS = [];
+      OPCIONES_BASE.AVANZA = [];
+      OPCIONES_BASE.MOVI = [];
+      listaObrasSociales = [];
+
+      // 1. Intentar leer ENUMs de PostgreSQL vía RPC si existe alguna función expuesta
+      const nombresRpc = ['get_enums', 'obtener_enums', 'listar_enums', 'get_database_enums'];
+      for (let i = 0; i < nombresRpc.length; i++) {
+        try {
+          const resRpc = await supabaseClient.rpc(nombresRpc[i]);
+          if (!resRpc.error && Array.isArray(resRpc.data) && resRpc.data.length > 0) {
+            resRpc.data.forEach(function(item) {
+              const tipo = String(item.name || item.enum_name || item.type_name || '').toUpperCase();
+              const vals = normalizarValoresEnum(item.values || item.enum_values || item.labels);
+              if (tipo === 'REGIMEN' && vals.length) OPCIONES_BASE.REGIMEN = vals;
+              if (tipo === 'LOCALIDAD' && vals.length) OPCIONES_BASE.LOCALIDAD = vals;
+              if (tipo === 'ESTADO' && vals.length) OPCIONES_BASE.ESTADO = vals;
+              if (tipo === 'OPERADOR' && vals.length) OPCIONES_BASE.OPERADOR = vals;
+              if ((tipo === 'TIPO_GESTION' || tipo === 'TIPO DE GESTION') && vals.length) OPCIONES_BASE.TIPO_GESTION = vals;
+              if ((tipo === 'MEDIO' || tipo === 'MEDIO_RECEPCION' || tipo === 'MEDIO DE RECEPCION') && vals.length) OPCIONES_BASE.MEDIO_RECEPCION = vals;
+              if ((tipo === 'PATOLOGIAS' || tipo === 'CUADRO CLINICO') && vals.length) OPCIONES_BASE.PATOLOGIAS = vals;
+              if ((tipo === 'AVANZA' || tipo === 'AVANZAR') && vals.length) OPCIONES_BASE.AVANZA = vals;
+              if ((tipo === 'MOVI' || tipo === 'TIPO MOVIMIENTO' || tipo === 'TIPO_MOVIMIENTO') && vals.length) OPCIONES_BASE.MOVI = vals;
+            });
+            break;
+          }
+        } catch (_) {}
+      }
+
+      // 2. Cargar obras sociales desde tabla obras_sociales en Supabase
+      const resOs = await supabaseClient
+        .from('obras_sociales')
+        .select('sigla, nombre')
+        .order('sigla', { ascending: true })
+        .range(0, 999);
+
+      if (!resOs.error && Array.isArray(resOs.data) && resOs.data.length > 0) {
+        listaObrasSociales = resOs.data;
+      }
+
+      // 3. Completar listas que aún estén vacías a partir de los valores reales existentes en las tablas
+      if (!OPCIONES_BASE.REGIMEN.length) {
+        OPCIONES_BASE.REGIMEN = extraerValoresDeFilas(listaAfiliados, ['REGIMEN']);
+      }
+      if (!OPCIONES_BASE.LOCALIDAD.length) {
+        OPCIONES_BASE.LOCALIDAD = extraerValoresDeFilas(listaAfiliados, ['LOCALIDAD']);
+      }
+      if (!OPCIONES_BASE.TIPO_GESTION.length) {
+        OPCIONES_BASE.TIPO_GESTION = extraerValoresDeFilas(listaAfiliados, ['TIPO DE GESTION']);
+      }
+      if (!OPCIONES_BASE.MEDIO_RECEPCION.length) {
+        OPCIONES_BASE.MEDIO_RECEPCION = extraerValoresDeFilas(listaAfiliados, ['MEDIO DE RECEPCION']);
+      }
+      if (!OPCIONES_BASE.MOVI.length) {
+        OPCIONES_BASE.MOVI = extraerValoresDeFilas(listaTurnos, ['TIPO MOVIMIENTO', 'ESTADO']);
+      }
+      if (!OPCIONES_BASE.ESTADO.length) {
+        OPCIONES_BASE.ESTADO = OPCIONES_BASE.MOVI.slice();
+      }
+      if (!OPCIONES_BASE.OPERADOR.length) {
+        OPCIONES_BASE.OPERADOR = extraerValoresDeFilas(
+          listaAfiliados.concat(listaTurnos, listaSondeos, listaMovimientos),
+          ['OPERADOR', 'RECIBE OPERADOR', 'PROCESA OPERADOR']
+        );
+      }
+      if (!OPCIONES_BASE.PATOLOGIAS.length) {
+        OPCIONES_BASE.PATOLOGIAS = extraerValoresDeFilas(listaSondeos, ['CUADRO CLINICO']);
+      }
+      if (!OPCIONES_BASE.AVANZA.length) {
+        OPCIONES_BASE.AVANZA = extraerValoresDeFilas(listaSondeos, ['AVANZAR?']);
+      }
+
+      if (!listaObrasSociales.length) {
+        const siglasUnicas = extraerValoresDeFilas(listaAfiliados, ['SIGLAS']);
+        listaObrasSociales = siglasUnicas.map(function(s) { return { sigla: s, nombre: '' }; });
+      }
+    }
 
     const MAPA_OPERADORES_POR_EMAIL = {
       'rocio.ibarra@ossacra.org.ar': 'RIBARRA',
@@ -2389,19 +2519,23 @@
       document.getElementById('vistaTurnos').style.display = vista === 'turnos' ? 'block' : 'none';
       document.getElementById('vistaSondeos').style.display = vista === 'sondeos' ? 'block' : 'none';
       document.getElementById('vistaMovimientos').style.display = vista === 'movimientos' ? 'block' : 'none';
+      document.getElementById('vistaAgendaTurnos').style.display = vista === 'agenda_turnos' ? 'block' : 'none';
 
       document.getElementById('nav-afiliados').classList.toggle('active', vista === 'afiliados');
       document.getElementById('nav-turnos').classList.toggle('active', vista === 'turnos');
       document.getElementById('nav-sondeos').classList.toggle('active', vista === 'sondeos');
       document.getElementById('nav-movimientos').classList.toggle('active', vista === 'movimientos');
+      document.getElementById('nav-agenda-turnos').classList.toggle('active', vista === 'agenda_turnos');
 
       const bc = document.getElementById('breadcrumb');
       if (vista === 'turnos') {
-        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos y Solicitudes</span>';
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Movimientos Diarios</span>';
       } else if (vista === 'sondeos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Sondeos</span>';
       } else if (vista === 'movimientos') {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Modificar Registros</span>';
+      } else if (vista === 'agenda_turnos') {
+        bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">Turnos</span>';
       } else {
         bc.innerHTML = '<span>Inicio</span><span>›</span><span>Operación</span><span>›</span><span class="current">BASE DE DATOS</span>';
       }
@@ -2455,7 +2589,8 @@
       poblarSelect('af_localidad', OPCIONES_BASE.LOCALIDAD, '-- Seleccionar Localidad --');
       poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
       poblarSelect('af_medio_recepcion', OPCIONES_BASE.MEDIO_RECEPCION, '-- Seleccionar Medio de Recepción --');
-      poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
+      const opcionesMovi = (OPCIONES_BASE.MOVI && OPCIONES_BASE.MOVI.length) ? OPCIONES_BASE.MOVI : OPCIONES_BASE.ESTADO;
+      poblarSelect('tu_estado', opcionesMovi, '-- Seleccionar Tipo Movimiento --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
       poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Sin asignar --');
       poblarSelect('mo_recibe_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador que recibe --');
@@ -2466,16 +2601,26 @@
       poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
       poblarSelect('f_af_medio', OPCIONES_BASE.MEDIO_RECEPCION, 'Todos');
       poblarSelect('f_af_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
+      poblarSelect('f_af_operador', OPCIONES_BASE.OPERADOR, 'Todos');
 
-      poblarSelect('f_tu_estado', OPCIONES_BASE.ESTADO, 'Todos');
+      poblarSelect('f_tu_estado', opcionesMovi, 'Todos');
       poblarSelect('f_tu_operador', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_tu_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
       poblarSelect('f_so_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_so_operador', OPCIONES_BASE.OPERADOR, 'Todos');
+      if (OPCIONES_BASE.AVANZA && OPCIONES_BASE.AVANZA.length) {
+        poblarSelect('f_so_avanzar', OPCIONES_BASE.AVANZA, 'Todos');
+      }
 
       poblarSelect('f_mo_recibe', OPCIONES_BASE.OPERADOR, 'Todos');
       poblarSelect('f_mo_procesa', OPCIONES_BASE.OPERADOR, 'Todos');
+      poblarSelect('f_at_operador', OPCIONES_BASE.OPERADOR, 'Todos');
+      poblarSelect('f_at_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
+      poblarSelect('f_at_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
+      if (OPCIONES_BASE.TIPO_GESTION && OPCIONES_BASE.TIPO_GESTION.length) {
+        poblarSelect('f_mo_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
+      }
 
       const dlFiltro = document.getElementById('datalist_siglas_filtro');
       if (dlFiltro) {
@@ -2593,6 +2738,7 @@
       if (mostrarMensajeManual) {
         mostrarAlerta('Modificar Registros sincronizados: ' + listaMovimientos.length + ' registros encontrados.', 'success');
         filtrarMovimientos();
+        filtrarAgendaTurnos();
       }
     }
 
@@ -2607,7 +2753,7 @@
         listaAfiliados = resAf.data || [];
 
         const resTu = await supabaseClient
-          .from('TURNOS')
+          .from('MOVIMIENTOS DIARIOS')
           .select('*, afiliados(*)')
           .order('id', { ascending: false });
         if (resTu.error) throw resTu.error;
@@ -2628,15 +2774,7 @@
         await sincronizarSondeosDesdeAfiliados(false);
         await sincronizarMovimientosDesdeAfiliados(false);
 
-        const resOs = await supabaseClient
-          .from('obras_sociales')
-          .select('sigla, nombre')
-          .order('sigla', { ascending: true })
-          .range(0, 999);
-
-        if (!resOs.error && resOs.data && resOs.data.length > 0) {
-          listaObrasSociales = resOs.data;
-        }
+        await cargarCatalogosDesdeSupabase();
 
         setEstadoConexion('ok', 'Conectado (' + listaObrasSociales.length + ' OS)');
         actualizarDesplegables();
@@ -2668,7 +2806,7 @@
         const af = t.afiliados || {};
         const nombre = (af['APELLIDO Y NOMBRE'] || '').toLowerCase();
         const localidad = (af.LOCALIDAD || '').toLowerCase();
-        const estado = (t.ESTADO || '').toLowerCase();
+        const estado = ((t['TIPO MOVIMIENTO'] || t.ESTADO) || '').toLowerCase();
         const operador = (t.OPERADOR || '').toLowerCase();
         const cuil = (t.CUIL || '').toLowerCase();
 
@@ -2691,16 +2829,17 @@
       tbody.innerHTML = filtrados.map(function(t) {
         const af = t.afiliados || {};
         const tieneAf = Boolean(af.CUIL);
-        const estUpper = (t.ESTADO || '').toUpperCase();
-        const estClass = estUpper.indexOf('NO ASIST') !== -1 || estUpper.indexOf('SIN DOC') !== -1 ? 'est-cancelado' :
-                         estUpper.indexOf('CAMBIO') !== -1 ? 'est-pendiente' : 'est-confirmado';
+        const tipoMovVal = t['TIPO MOVIMIENTO'] || t.ESTADO || '-';
+        const estUpper = tipoMovVal.toUpperCase();
+        const estClass = estUpper.indexOf('LEGALES') !== -1 || estUpper.indexOf('0800') !== -1 ? 'est-cancelado' :
+                         estUpper.indexOf('COORDINAR') !== -1 || estUpper.indexOf('CITADO') !== -1 ? 'est-pendiente' : 'est-confirmado';
 
         return '<tr>' +
           '<td><input type="checkbox" class="chk-tu" /></td>' +
-          '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar turno">»</td>' +
+          '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar movimiento diario">»</td>' +
           '<td>' + (t.FECHA || '-') + '</td>' +
-          '<td>' + (t.HORA || '').slice(0, 5) + '</td>' +
-          '<td><span class="badge-estado ' + estClass + '">' + (t.ESTADO || '-') + '</span></td>' +
+          '<td>' + (t.HORA || '').slice(0, 8) + '</td>' +
+          '<td><span class="badge-estado ' + estClass + '">' + tipoMovVal + '</span></td>' +
           '<td class="' + (tieneAf ? 'text-si' : 'text-no') + '">' + (tieneAf ? 'Si' : 'No') + '</td>' +
           '<td>#' + t.id + '</td>' +
           '<td><b>' + (t.CUIL || '') + '</b></td>' +
@@ -2710,6 +2849,7 @@
           '<td>' + (af.SIGLAS || '-') + '</td>' +
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
           '<td>' + (t.OPERADOR || '-') + '</td>' +
+          '<td>' + (t.OBSERVACIONES || '-') + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -2722,8 +2862,9 @@
       const fCuil = document.getElementById('f_af_cuil').value.toLowerCase().trim();
       const fNom = document.getElementById('f_af_nombre').value.toLowerCase().trim();
       const fLoc = document.getElementById('f_af_localidad').value.toLowerCase();
+      const fOpe = document.getElementById('f_af_operador').value.toLowerCase();
 
-      const activos = [fReg, fSig, fGes, fMed, fCuil, fNom, fLoc].filter(Boolean).length;
+      const activos = [fReg, fSig, fGes, fMed, fCuil, fNom, fLoc, fOpe].filter(Boolean).length;
       document.getElementById('badgeFiltrosAfiliados').textContent = activos;
       document.getElementById('badgeTotalAfiliados').textContent = listaAfiliados.length;
 
@@ -2734,14 +2875,15 @@
                (!fMed || (af['MEDIO DE RECEPCION'] || '').toLowerCase() === fMed) &&
                (!fCuil || (af.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
                (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
-               (!fLoc || (af.LOCALIDAD || '').toLowerCase() === fLoc);
+               (!fLoc || (af.LOCALIDAD || '').toLowerCase() === fLoc) &&
+               (!fOpe || (af.OPERADOR || '').toLowerCase() === fOpe);
       });
 
       document.getElementById('infoAfiliados').textContent = filtrados.length + ' registros';
       const tbody = document.getElementById('tbodyAfiliados');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
         return;
       }
 
@@ -2760,6 +2902,7 @@
           '<td>' + (af.SIGLAS || '-') + '</td>' +
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
           '<td>' + (af['MEDIO DE RECEPCION'] || '-') + '</td>' +
+          '<td><b>' + (af.OPERADOR || '-') + '</b></td>' +
           '<td>' + (af.FECHA || '-') + '</td>' +
           '<td>' + horaFmt + '</td>' +
         '</tr>';
@@ -2894,7 +3037,7 @@
     }
 
     function limpiarFiltrosAfiliados() {
-      ['f_af_regimen', 'f_af_siglas', 'f_af_gestion', 'f_af_medio', 'f_af_cuil', 'f_af_nombre', 'f_af_localidad'].forEach(function(id) {
+      ['f_af_regimen', 'f_af_siglas', 'f_af_gestion', 'f_af_medio', 'f_af_cuil', 'f_af_nombre', 'f_af_localidad', 'f_af_operador'].forEach(function(id) {
         document.getElementById(id).value = '';
       });
       filtrarAfiliados();
@@ -3064,13 +3207,39 @@
       document.getElementById('drawerMovimiento').classList.add('open');
     }
 
+    function actualizarCamposCitado() {
+      const selTipo = document.getElementById('tu_estado');
+      const tipoVal = ((selTipo && selTipo.value) || '').trim().toUpperCase();
+      const esCitado = tipoVal === 'CITADO';
+      const bloque = document.getElementById('bloqueCamposCitado');
+      const inpFecha = document.getElementById('tu_fecha_turno');
+      const inpHora = document.getElementById('tu_hora_turno');
+
+      if (bloque) bloque.style.display = esCitado ? 'block' : 'none';
+      if (inpFecha) {
+        inpFecha.required = esCitado;
+        if (!esCitado) inpFecha.value = '';
+      }
+      if (inpHora) {
+        inpHora.required = esCitado;
+        if (!esCitado) inpHora.value = '';
+      }
+    }
+
     function abrirDrawerTurno(cuilPreseleccionado) {
       if (!usuarioActual) return;
       document.getElementById('formTurno').reset();
       document.getElementById('tu_id').value = '';
+      document.getElementById('tituloDrawerMovDiario').textContent = 'Nuevo Movimiento Diario';
+      const sello = obtenerFechaHoraSistemaArgentina();
+      document.getElementById('tu_fecha').value = sello.fecha;
+      document.getElementById('tu_hora').value = sello.hora + '-03';
+      const opDef = obtenerUsuarioCodigo();
+      if (opDef) setSelectValor('tu_operador', opDef);
       if (cuilPreseleccionado) {
         document.getElementById('tu_cuil').value = cuilPreseleccionado;
       }
+      actualizarCamposCitado();
       document.getElementById('drawerTurno').classList.add('open');
     }
 
@@ -3080,10 +3249,17 @@
       if (!t) return;
       abrirDrawerTurno(t.CUIL);
       document.getElementById('tu_id').value = t.id;
-      document.getElementById('tu_fecha').value = t.FECHA || '';
-      document.getElementById('tu_hora').value = (t.HORA || '').slice(0, 5);
-      setSelectValor('tu_estado', t.ESTADO);
+      document.getElementById('tituloDrawerMovDiario').textContent = 'Editar Movimiento Diario #' + t.id;
+      const sello = obtenerFechaHoraSistemaArgentina();
+      document.getElementById('tu_fecha').value = t.FECHA || sello.fecha;
+      document.getElementById('tu_hora').value = t.HORA || (sello.hora + '-03');
+      setSelectValor('tu_estado', t['TIPO MOVIMIENTO'] || t.ESTADO);
+      document.getElementById('tu_operador');
       setSelectValor('tu_operador', t.OPERADOR);
+      document.getElementById('tu_observaciones').value = t.OBSERVACIONES || '';
+      document.getElementById('tu_fecha_turno').value = t['FECHA TURNO'] || t.FECHA_TURNO || '';
+      document.getElementById('tu_hora_turno').value = (t['HS TURNO'] || t['HORA TURNO'] || t.HS_TURNO || t.HORA_TURNO || '').slice(0, 5);
+      actualizarCamposCitado();
     }
 
     async function guardarAfiliado(e) {
@@ -3124,6 +3300,8 @@
 
       if (!esEdicion) {
         const selloSistema = obtenerFechaHoraSistemaArgentina();
+        const codigoOp = obtenerUsuarioCodigo();
+        if (codigoOp) payload['OPERADOR'] = codigoOp;
         payload['FECHA'] = selloSistema.fecha;
         payload['HORA'] = selloSistema.hora + '-03';
       }
@@ -3246,46 +3424,194 @@
       if (!supabaseClient || !usuarioActual) return;
 
       const idTurno = document.getElementById('tu_id').value;
-      const horaRaw = document.getElementById('tu_hora').value;
-      const horaConZona = horaRaw.length === 5 ? horaRaw + ':00-03' : horaRaw;
+      const registroPrevio = idTurno
+        ? listaTurnos.find(function(item) { return String(item.id) === String(idTurno); })
+        : null;
+
+      // La FECHA y HORA del sistema quedan fijas una vez guardadas y no se permiten modificar
+      let fechaFinal = '';
+      let horaFinal = '';
+      if (registroPrevio && registroPrevio.FECHA && registroPrevio.HORA) {
+        fechaFinal = registroPrevio.FECHA;
+        horaFinal = registroPrevio.HORA;
+      } else {
+        const selloSistema = obtenerFechaHoraSistemaArgentina();
+        fechaFinal = selloSistema.fecha;
+        horaFinal = selloSistema.hora + '-03';
+      }
+
+      const tipoMov = document.getElementById('tu_estado').value.trim();
+      const ope = document.getElementById('tu_operador').value.trim();
+      const obs = document.getElementById('tu_observaciones').value.trim();
+      const esCitado = tipoMov.toUpperCase() === 'CITADO';
+      const fechaTurnoManual = esCitado ? (document.getElementById('tu_fecha_turno').value || null) : null;
+      const horaTurnoRaw = esCitado ? (document.getElementById('tu_hora_turno').value || '') : '';
+      const horaTurnoManual = esCitado && horaTurnoRaw
+        ? (horaTurnoRaw.length === 5 ? horaTurnoRaw + ':00' : horaTurnoRaw)
+        : null;
+
+      if (esCitado && (!fechaTurnoManual || !horaTurnoManual)) {
+        mostrarAlerta('Cuando el TIPO MOVIMIENTO es CITADO debes ingresar FECHA TURNO y HORA TURNO.', 'error');
+        return;
+      }
 
       const payload = {
         'CUIL': document.getElementById('tu_cuil').value.trim(),
-        'FECHA': document.getElementById('tu_fecha').value,
-        'HORA': horaConZona
+        'FECHA': fechaFinal,
+        'HORA': horaFinal,
+        'TIPO MOVIMIENTO': tipoMov || null,
+        'OPERADOR': ope || null,
+        'OBSERVACIONES': obs || null,
+        'FECHA TURNO': fechaTurnoManual,
+        'HS TURNO': horaTurnoManual
       };
 
-      const est = document.getElementById('tu_estado').value.trim();
-      const ope = document.getElementById('tu_operador').value.trim();
-      if (est) payload['ESTADO'] = est;
-      if (ope) payload['OPERADOR'] = ope;
-
       const res = idTurno
-        ? await supabaseClient.from('TURNOS').update(payload).eq('id', idTurno)
-        : await supabaseClient.from('TURNOS').insert([payload]);
+        ? await supabaseClient.from('MOVIMIENTOS DIARIOS').update(payload).eq('id', idTurno)
+        : await supabaseClient.from('MOVIMIENTOS DIARIOS').insert([payload]);
 
-      if (res.error) {
-        mostrarAlerta('Error al guardar turno: ' + res.error.message, 'error');
+      // Si la base aún no tiene columnas FECHA TURNO / HORA TURNO, reintenta guardando en OBSERVACIONES sin perder los datos
+      let resultadoFinal = res;
+      if (res.error && esCitado && /column|FECHA TURNO|HS TURNO|HORA TURNO/i.test(res.error.message || '')) {
+        const payloadSinColsTurno = Object.assign({}, payload);
+        delete payloadSinColsTurno['FECHA TURNO'];
+        delete payloadSinColsTurno['HS TURNO'];
+        const marcaTurno = '[TURNO CITADO: ' + fechaTurnoManual + ' ' + horaTurnoManual.slice(0, 5) + ']';
+        payloadSinColsTurno['OBSERVACIONES'] = obs
+          ? (obs.indexOf('[TURNO CITADO:') !== -1 ? obs.replace(/\[TURNO CITADO:[^\]]*\]/, marcaTurno) : obs + ' ' + marcaTurno)
+          : marcaTurno;
+        resultadoFinal = idTurno
+          ? await supabaseClient.from('MOVIMIENTOS DIARIOS').update(payloadSinColsTurno).eq('id', idTurno)
+          : await supabaseClient.from('MOVIMIENTOS DIARIOS').insert([payloadSinColsTurno]);
+      }
+
+      if (resultadoFinal.error) {
+        mostrarAlerta('Error al guardar movimiento diario: ' + resultadoFinal.error.message, 'error');
       } else {
-        mostrarAlerta(idTurno ? 'Turno actualizado correctamente.' : 'Turno asignado correctamente.', 'success');
+        mostrarAlerta(
+          esCitado
+            ? 'Movimiento CITADO guardado y reflejado en la vista Turnos (' + fechaTurnoManual + ' ' + horaTurnoManual.slice(0, 5) + ').'
+            : (idTurno ? 'Movimiento diario actualizado (fecha y hora conservadas).' : 'Movimiento diario guardado con fecha y hora del sistema.'),
+          'success'
+        );
         cerrarDrawers();
         cargarDatos();
       }
     }
 
+    function obtenerDatosTurnoCitado(t) {
+      let fechaTurno = t['FECHA TURNO'] || t.FECHA_TURNO || '';
+      let horaTurno = t['HS TURNO'] || t['HORA TURNO'] || t.HS_TURNO || t.HORA_TURNO || '';
+      const obs = String(t.OBSERVACIONES || '');
+      const match = obs.match(/\[TURNO CITADO:\s*(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}(?::\d{2})?)\]/i);
+      if (match) {
+        if (!fechaTurno) fechaTurno = match[1];
+        if (!horaTurno) horaTurno = match[2];
+      }
+      return {
+        fechaTurno: fechaTurno || '-',
+        horaTurno: horaTurno ? String(horaTurno).slice(0, 5) : '-'
+      };
+    }
+
+    function obtenerListaTurnosCitados() {
+      return listaTurnos.filter(function(t) {
+        const tipo = String(t['TIPO MOVIMIENTO'] || t.ESTADO || '').trim().toUpperCase();
+        return tipo === 'CITADO';
+      });
+    }
+
+    function filtrarAgendaTurnos() {
+      const fCuil = document.getElementById('f_at_cuil').value.toLowerCase().trim();
+      const fNom = document.getElementById('f_at_nombre').value.toLowerCase().trim();
+      const fFec = document.getElementById('f_at_fecha').value;
+      const fOpe = document.getElementById('f_at_operador').value.toLowerCase();
+      const fLoc = document.getElementById('f_at_localidad').value.toLowerCase();
+      const fGes = document.getElementById('f_at_gestion').value.toLowerCase();
+
+      const citados = obtenerListaTurnosCitados();
+      const activos = [fCuil, fNom, fFec, fOpe, fLoc, fGes].filter(Boolean).length;
+      document.getElementById('badgeFiltrosAgendaTurnos').textContent = activos;
+      document.getElementById('badgeTotalAgendaTurnos').textContent = citados.length;
+
+      const filtrados = citados.filter(function(t) {
+        const af = t.afiliados || {};
+        const datosTurno = obtenerDatosTurnoCitado(t);
+        const nombre = (af['APELLIDO Y NOMBRE'] || '').toLowerCase();
+        const localidad = (af.LOCALIDAD || '').toLowerCase();
+        const gestion = (af['TIPO DE GESTION'] || '').toLowerCase();
+        const operador = (t.OPERADOR || '').toLowerCase();
+        const cuil = (t.CUIL || '').toLowerCase();
+
+        return (!fCuil || cuil.indexOf(fCuil) !== -1) &&
+               (!fNom || nombre.indexOf(fNom) !== -1) &&
+               (!fFec || datosTurno.fechaTurno === fFec) &&
+               (!fOpe || operador === fOpe) &&
+               (!fLoc || localidad === fLoc) &&
+               (!fGes || gestion === fGes);
+      });
+
+      document.getElementById('infoAgendaTurnos').textContent = filtrados.length + ' registros';
+      const tbody = document.getElementById('tbodyAgendaTurnos');
+
+      if (filtrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="16" style="text-align:center; padding:24px; color:#64748b;">No hay registros con TIPO MOVIMIENTO = CITADO en Movimientos Diarios.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtrados.map(function(t) {
+        const af = t.afiliados || {};
+        const datosTurno = obtenerDatosTurnoCitado(t);
+        return '<tr>' +
+          '<td><input type="checkbox" class="chk-at" /></td>' +
+          '<td class="cell-action" onclick="editarTurnoPorId(' + t.id + ')" title="Editar Movimiento / Turno">»</td>' +
+          '<td>#' + t.id + '</td>' +
+          '<td><b>' + (t.CUIL || '') + '</b></td>' +
+          '<td>' + (af['APELLIDO Y NOMBRE'] || '-') + '</td>' +
+          '<td>' + (af['NRO CELULAR'] || '-') + '</td>' +
+          '<td>' + (af.LOCALIDAD || '-') + '</td>' +
+          '<td>' + (af.REGIMEN || '-') + '</td>' +
+          '<td>' + (af.SIGLAS || '-') + '</td>' +
+          '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+          '<td><b class="text-si">' + datosTurno.fechaTurno + '</b></td>' +
+          '<td><b class="text-si">' + (datosTurno.horaTurno !== '-' ? datosTurno.horaTurno + ' hs' : '-') + '</b></td>' +
+          '<td><b>' + (t.OPERADOR || '-') + '</b></td>' +
+          '<td>' + (t.FECHA || '-') + '</td>' +
+          '<td>' + (t.HORA || '').slice(0, 8) + '</td>' +
+          '<td>' + (t.OBSERVACIONES || '-') + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function limpiarFiltrosAgendaTurnos() {
+      ['f_at_cuil', 'f_at_nombre', 'f_at_fecha', 'f_at_operador', 'f_at_localidad', 'f_at_gestion'].forEach(function(id) {
+        document.getElementById(id).value = '';
+      });
+      filtrarAgendaTurnos();
+    }
+
     function exportarCSV(tipo) {
       let datos = listaAfiliados;
       if (tipo === 'turnos') datos = listaTurnos;
+      if (tipo === 'agenda_turnos') datos = obtenerListaTurnosCitados();
       if (tipo === 'sondeos') datos = listaSondeos;
       if (tipo === 'movimientos') datos = listaMovimientos;
       if (!datos.length) return;
 
       let filas = [];
       if (tipo === 'turnos') {
-        filas = [['ID', 'CUIL', 'Afiliado', 'Fecha', 'Hora', 'Estado', 'Operador']].concat(
+        filas = [['ID', 'CUIL', 'Afiliado', 'Fecha', 'Hora', 'Tipo Movimiento', 'Operador', 'Observaciones']].concat(
           datos.map(function(t) {
             const nom = (t.afiliados && t.afiliados['APELLIDO Y NOMBRE']) ? t.afiliados['APELLIDO Y NOMBRE'] : '';
-            return [t.id, t.CUIL, nom, t.FECHA, t.HORA, t.ESTADO || '', t.OPERADOR || ''];
+            return [t.id, t.CUIL, nom, t.FECHA, t.HORA, t['TIPO MOVIMIENTO'] || t.ESTADO || '', t.OPERADOR || '', t.OBSERVACIONES || ''];
+          })
+        );
+      } else if (tipo === 'agenda_turnos') {
+        filas = [['ID Mov', 'CUIL', 'Apellido y Nombre', 'Celular', 'Localidad', 'Regimen', 'Siglas', 'Tipo Gestion', 'FECHA TURNO', 'HORA TURNO', 'OPERADOR', 'FECHA CARGA', 'HORA CARGA', 'Observaciones']].concat(
+          datos.map(function(t) {
+            const af = t.afiliados || {};
+            const dt = obtenerDatosTurnoCitado(t);
+            return [t.id, t.CUIL, af['APELLIDO Y NOMBRE'] || '', af['NRO CELULAR'] || '', af.LOCALIDAD || '', af.REGIMEN || '', af.SIGLAS || '', af['TIPO DE GESTION'] || '', dt.fechaTurno, dt.horaTurno, t.OPERADOR || '', t.FECHA || '', t.HORA || '', t.OBSERVACIONES || ''];
           })
         );
       } else if (tipo === 'sondeos') {
@@ -3335,9 +3661,9 @@
           })
         );
       } else {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'Medio Recepcion', 'Fecha', 'Hora']].concat(
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'Medio Recepcion', 'Operador Carga', 'Fecha', 'Hora']].concat(
           datos.map(function(a) {
-            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || '', a['MEDIO DE RECEPCION'] || '', a.FECHA || '', a.HORA ? String(a.HORA).slice(0, 5) : ''];
+            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || '', a['MEDIO DE RECEPCION'] || '', a.OPERADOR || '', a.FECHA || '', a.HORA ? String(a.HORA).slice(0, 5) : ''];
           })
         );
       }
