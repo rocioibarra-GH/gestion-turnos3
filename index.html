@@ -1148,6 +1148,12 @@
               </select>
             </div>
             <div class="outlined-field">
+              <label>Medio de Recepción</label>
+              <select id="f_af_medio" onchange="filtrarAfiliados()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="outlined-field">
               <label>Cuil - Titular</label>
               <input type="text" id="f_af_cuil" placeholder="Ej: 20123456789" oninput="filtrarAfiliados()" />
             </div>
@@ -1198,6 +1204,9 @@
                     <th>Régimen</th>
                     <th>Siglas</th>
                     <th>Tipo de Gestión</th>
+                    <th>Medio de Recepción</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
                   </tr>
                 </thead>
                 <tbody id="tbodyAfiliados">
@@ -1597,6 +1606,13 @@
               <option value="">-- Seleccionar Tipo de Gestión --</option>
             </select>
           </div>
+
+          <div class="form-field">
+            <label>MEDIO DE RECEPCIÓN</label>
+            <select id="af_medio_recepcion">
+              <option value="">-- Seleccionar Medio de Recepción --</option>
+            </select>
+          </div>
         </div>
 
         <div class="drawer-footer">
@@ -1929,6 +1945,16 @@
         'BLOQUEO/DESBLOQUEO',
         'CALCULO DEUDA',
         'CONVENIO DE PAGO'
+      ],
+      MEDIO_RECEPCION: [
+        'WHATSAPP',
+        'LLAMADA',
+        'CORREO',
+        'BOT',
+        'AT. ESPONTANEA',
+        'INTERNACION',
+        '0800',
+        'LEGALES'
       ],
       PATOLOGIAS: [
         'HIPERTENSION',
@@ -2427,6 +2453,7 @@
       poblarSelect('af_regimen', OPCIONES_BASE.REGIMEN, '-- Seleccionar Régimen --');
       poblarSelect('af_localidad', OPCIONES_BASE.LOCALIDAD, '-- Seleccionar Localidad --');
       poblarSelect('af_gestion', OPCIONES_BASE.TIPO_GESTION, '-- Seleccionar Tipo de Gestión --');
+      poblarSelect('af_medio_recepcion', OPCIONES_BASE.MEDIO_RECEPCION, '-- Seleccionar Medio de Recepción --');
       poblarSelect('tu_estado', OPCIONES_BASE.ESTADO, '-- Seleccionar Estado --');
       poblarSelect('tu_operador', OPCIONES_BASE.OPERADOR, '-- Seleccionar Operador --');
       poblarSelect('so_operador', OPCIONES_BASE.OPERADOR, '-- Sin asignar --');
@@ -2436,6 +2463,7 @@
 
       poblarSelect('f_af_regimen', OPCIONES_BASE.REGIMEN, 'Todos');
       poblarSelect('f_af_gestion', OPCIONES_BASE.TIPO_GESTION, 'Todos');
+      poblarSelect('f_af_medio', OPCIONES_BASE.MEDIO_RECEPCION, 'Todos');
       poblarSelect('f_af_localidad', OPCIONES_BASE.LOCALIDAD, 'Todas');
 
       poblarSelect('f_tu_estado', OPCIONES_BASE.ESTADO, 'Todos');
@@ -2689,11 +2717,12 @@
       const fReg = document.getElementById('f_af_regimen').value.toLowerCase();
       const fSig = document.getElementById('f_af_siglas').value.toLowerCase().trim();
       const fGes = document.getElementById('f_af_gestion').value.toLowerCase();
+      const fMed = document.getElementById('f_af_medio').value.toLowerCase();
       const fCuil = document.getElementById('f_af_cuil').value.toLowerCase().trim();
       const fNom = document.getElementById('f_af_nombre').value.toLowerCase().trim();
       const fLoc = document.getElementById('f_af_localidad').value.toLowerCase();
 
-      const activos = [fReg, fSig, fGes, fCuil, fNom, fLoc].filter(Boolean).length;
+      const activos = [fReg, fSig, fGes, fMed, fCuil, fNom, fLoc].filter(Boolean).length;
       document.getElementById('badgeFiltrosAfiliados').textContent = activos;
       document.getElementById('badgeTotalAfiliados').textContent = listaAfiliados.length;
 
@@ -2701,6 +2730,7 @@
         return (!fReg || (af.REGIMEN || '').toLowerCase() === fReg) &&
                (!fSig || (af.SIGLAS || '').toLowerCase().indexOf(fSig) !== -1) &&
                (!fGes || (af['TIPO DE GESTION'] || '').toLowerCase() === fGes) &&
+               (!fMed || (af['MEDIO DE RECEPCION'] || '').toLowerCase() === fMed) &&
                (!fCuil || (af.CUIL || '').toLowerCase().indexOf(fCuil) !== -1) &&
                (!fNom || (af['APELLIDO Y NOMBRE'] || '').toLowerCase().indexOf(fNom) !== -1) &&
                (!fLoc || (af.LOCALIDAD || '').toLowerCase() === fLoc);
@@ -2710,12 +2740,13 @@
       const tbody = document.getElementById('tbodyAfiliados');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding:24px; color:#64748b;">No hay registros cargados aún. Haz clic en "Agregar ›" para registrar uno.</td></tr>';
         return;
       }
 
       tbody.innerHTML = filtrados.map(function(af) {
         const cuilEsc = String(af.CUIL || '').replace(/'/g, "\\'");
+        const horaFmt = af.HORA ? String(af.HORA).slice(0, 5) + ' hs' : '-';
         return '<tr>' +
           '<td><input type="checkbox" class="chk-af" /></td>' +
           '<td class="cell-action" onclick="editarAfiliadoPorCuil(\'' + cuilEsc + '\')" title="Editar registro">»</td>' +
@@ -2727,6 +2758,9 @@
           '<td>' + (af.REGIMEN || '-') + '</td>' +
           '<td>' + (af.SIGLAS || '-') + '</td>' +
           '<td>' + (af['TIPO DE GESTION'] || '-') + '</td>' +
+          '<td>' + (af['MEDIO DE RECEPCION'] || '-') + '</td>' +
+          '<td>' + (af.FECHA || '-') + '</td>' +
+          '<td>' + horaFmt + '</td>' +
         '</tr>';
       }).join('');
     }
@@ -2859,7 +2893,7 @@
     }
 
     function limpiarFiltrosAfiliados() {
-      ['f_af_regimen', 'f_af_siglas', 'f_af_gestion', 'f_af_cuil', 'f_af_nombre', 'f_af_localidad'].forEach(function(id) {
+      ['f_af_regimen', 'f_af_siglas', 'f_af_gestion', 'f_af_medio', 'f_af_cuil', 'f_af_nombre', 'f_af_localidad'].forEach(function(id) {
         document.getElementById(id).value = '';
       });
       filtrarAfiliados();
@@ -2955,6 +2989,7 @@
       setValorSiglaFormulario(af.SIGLAS);
       setSelectValor('af_localidad', af.LOCALIDAD);
       setSelectValor('af_gestion', af['TIPO DE GESTION']);
+      setSelectValor('af_medio_recepcion', af['MEDIO DE RECEPCION']);
     }
 
     function editarSondeoPorCuil(cuil) {
@@ -2979,7 +3014,7 @@
       selOperador.disabled = !puedeAsignar;
       hintOp.textContent = puedeAsignar
         ? 'Puedes asignar o cambiar el operador responsable del sondeo.'
-        : 'Solo BRIOS, ASANDOVAL o RIBARRA pueden asignar o reasignar el operador.';
+        : 'Solo BRIOS, RIBARRA o ASANDOVAL pueden asignar o reasignar el operador.';
 
       document.getElementById('so_fecha_llamada').value = item['FECHA LLAMADA'] || '';
       document.getElementById('so_hora_llamada').value = item['HORA LLAMADA']
@@ -3076,6 +3111,7 @@
       const reg = document.getElementById('af_regimen').value.trim();
       const loc = document.getElementById('af_localidad').value.trim();
       const ges = document.getElementById('af_gestion').value.trim();
+      const med = document.getElementById('af_medio_recepcion').value.trim();
 
       if (cel) payload['NRO CELULAR'] = cel;
       if (cor) payload['CORREO ELECTRONICO'] = cor;
@@ -3083,6 +3119,13 @@
       if (sig) payload['SIGLAS'] = sig;
       if (loc) payload['LOCALIDAD'] = loc;
       if (ges) payload['TIPO DE GESTION'] = ges;
+      if (med) payload['MEDIO DE RECEPCION'] = med;
+
+      if (!esEdicion) {
+        const selloSistema = obtenerFechaHoraSistemaArgentina();
+        payload['FECHA'] = selloSistema.fecha;
+        payload['HORA'] = selloSistema.hora + '-03';
+      }
 
       const res = esEdicion
         ? await supabaseClient.from('afiliados').update(payload).eq('CUIL', cuil)
@@ -3291,9 +3334,9 @@
           })
         );
       } else {
-        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion']].concat(
+        filas = [['CUIL', 'Apellido y Nombre', 'Celular', 'Correo', 'Regimen', 'Siglas', 'Localidad', 'Tipo Gestion', 'Medio Recepcion', 'Fecha', 'Hora']].concat(
           datos.map(function(a) {
-            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || ''];
+            return [a.CUIL, a['APELLIDO Y NOMBRE'], a['NRO CELULAR'] || '', a['CORREO ELECTRONICO'] || '', a.REGIMEN || '', a.SIGLAS || '', a.LOCALIDAD || '', a['TIPO DE GESTION'] || '', a['MEDIO DE RECEPCION'] || '', a.FECHA || '', a.HORA ? String(a.HORA).slice(0, 5) : ''];
           })
         );
       }
