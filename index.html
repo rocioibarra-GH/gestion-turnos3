@@ -1223,7 +1223,7 @@
                   </tr>
                 </thead>
                 <tbody id="tbodyAfiliados">
-                  <tr><td colspan="10" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
+                  <tr><td colspan="16" style="text-align:center; padding:30px; color:#64748b;">Cargando registros...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1504,14 +1504,14 @@
                   </tr>
                 </thead>
                 <tbody id="tbodyAgendaTurnos">
-                  <tr><td colspan="16" style="text-align:center; padding:30px; color:#64748b;">No hay turnos (CITADO) registrados aún.</td></tr>
+                  <tr><td colspan="17" style="text-align:center; padding:30px; color:#64748b;">No hay turnos (CITADO) registrados aún.</td></tr>
                 </tbody>
               </table>
             </div>
           </div>
         </section>
 
-                <!-- VISTA 4: MOVIMIENTOS -->
+        <!-- VISTA 4: MOVIMIENTOS -->
         <section id="vistaMovimientos" style="display:none;">
           <div class="action-bar">
             <button type="button" class="btn-pill" onclick="cambiarVista('afiliados')">‹ Regresar</button>
@@ -1981,9 +1981,22 @@
 
           <div class="form-field">
             <label>CUIL DEL AFILIADO *</label>
-            <select id="tu_cuil" required>
-              <option value="">-- Seleccionar Afiliado por CUIL --</option>
-            </select>
+            <div class="combo-wrapper" id="tuCuilComboWrapper">
+              <div class="combo-input-row">
+                <input
+                  type="text"
+                  id="tu_cuil_busqueda"
+                  autocomplete="off"
+                  placeholder="Escribí CUIL o nombre (ej: 27352230761 o IBARRA)..."
+                  onfocus="abrirComboTuCuil()"
+                  oninput="filtrarComboTuCuil()"
+                />
+                <button type="button" class="combo-clear-btn" id="btnLimpiarTuCuil" onclick="limpiarTuCuilSeleccionado()" title="Limpiar">×</button>
+                <button type="button" class="combo-arrow-btn" onclick="toggleComboTuCuil()" title="Ver lista">▼</button>
+              </div>
+              <input type="hidden" id="tu_cuil" required value="" />
+              <div class="combo-dropdown" id="tuCuilComboDropdown"></div>
+            </div>
           </div>
 
           <div class="two-col-row">
@@ -2066,7 +2079,6 @@
     let ordenAscTurnos = true;
     let ordenAscAfiliados = true;
 
-    // Catálogos cargados dinámicamente desde Supabase (sin constantes quemadas)
     const OPCIONES_BASE = {
       REGIMEN: [],
       SIGLAS_FALLBACK: [],
@@ -2127,7 +2139,6 @@
       OPCIONES_BASE.MOVI = [];
       listaObrasSociales = [];
 
-      // 1. Intentar leer ENUMs de PostgreSQL vía RPC si existe alguna función expuesta
       const nombresRpc = ['get_enums', 'obtener_enums', 'listar_enums', 'get_database_enums'];
       for (let i = 0; i < nombresRpc.length; i++) {
         try {
@@ -2151,7 +2162,6 @@
         } catch (_) {}
       }
 
-      // 2. Cargar obras sociales desde tabla obras_sociales en Supabase
       const resOs = await supabaseClient
         .from('obras_sociales')
         .select('sigla, nombre')
@@ -2162,7 +2172,6 @@
         listaObrasSociales = resOs.data;
       }
 
-      // 3. Completar listas que aún estén vacías a partir de los valores reales existentes en las tablas
       if (!OPCIONES_BASE.REGIMEN.length) {
         OPCIONES_BASE.REGIMEN = extraerValoresDeFilas(listaAfiliados, ['REGIMEN']);
       }
@@ -2262,6 +2271,10 @@
         if (wrapperAnt && !wrapperAnt.contains(ev.target)) {
           cerrarComboOsAnterior();
         }
+        const wrapperTuCuil = document.getElementById('tuCuilComboWrapper');
+        if (wrapperTuCuil && !wrapperTuCuil.contains(ev.target)) {
+          cerrarComboTuCuil();
+        }
       });
 
       try {
@@ -2295,6 +2308,163 @@
       document.addEventListener('DOMContentLoaded', iniciarApp);
     } else {
       iniciarApp();
+    }
+
+    /* ================= BUSCADOR AUTOCOMPLETABLE DE CUIL AFILIADO ================= */
+    function formatearEtiquetaAfiliado(af) {
+      const cuilClean = String((af && af.CUIL) || '').trim();
+      const nomClean = String((af && af['APELLIDO Y NOMBRE']) || '').trim();
+      return nomClean ? (cuilClean + ' - ' + nomClean) : cuilClean;
+    }
+
+    function buscarCoincidenciaAfiliado(texto) {
+      const limpio = String(texto || '').trim();
+      if (!limpio) return null;
+      const upper = limpio.toUpperCase();
+
+      let encontrada = listaAfiliados.find(function(af) {
+        const cuil = String(af.CUIL || '').trim().toUpperCase();
+        const etq = formatearEtiquetaAfiliado(af).toUpperCase();
+        return cuil === upper || etq === upper;
+      });
+      if (encontrada) return encontrada;
+
+      const idxGuion = limpio.indexOf(' - ');
+      if (idxGuion !== -1) {
+        const posibleCuil = limpio.slice(0, idxGuion).trim().toUpperCase();
+        encontrada = listaAfiliados.find(function(af) {
+          return String(af.CUIL || '').trim().toUpperCase() === posibleCuil;
+        });
+        if (encontrada) return encontrada;
+      }
+
+      const soloDigitos = limpio.replace(/\D/g, '');
+      if (soloDigitos.length >= 8) {
+        encontrada = listaAfiliados.find(function(af) {
+          return String(af.CUIL || '').replace(/\D/g, '') === soloDigitos;
+        });
+      }
+      return encontrada || null;
+    }
+
+    function abrirComboTuCuil() {
+      const inp = document.getElementById('tu_cuil_busqueda');
+      if (!inp) return;
+      const coinc = buscarCoincidenciaAfiliado(inp.value);
+      renderizarOpcionesTuCuil(coinc ? '' : inp.value);
+      const dd = document.getElementById('tuCuilComboDropdown');
+      if (dd) dd.classList.add('open');
+    }
+
+    function cerrarComboTuCuil() {
+      const dd = document.getElementById('tuCuilComboDropdown');
+      if (dd) dd.classList.remove('open');
+    }
+
+    function toggleComboTuCuil() {
+      const dd = document.getElementById('tuCuilComboDropdown');
+      if (!dd) return;
+      if (dd.classList.contains('open')) {
+        cerrarComboTuCuil();
+      } else {
+        abrirComboTuCuil();
+        const inp = document.getElementById('tu_cuil_busqueda');
+        if (inp) inp.focus();
+      }
+    }
+
+    function filtrarComboTuCuil() {
+      const inp = document.getElementById('tu_cuil_busqueda');
+      const btnClear = document.getElementById('btnLimpiarTuCuil');
+      const hiddenCuil = document.getElementById('tu_cuil');
+      if (!inp) return;
+
+      const texto = inp.value;
+      if (btnClear) btnClear.style.display = texto ? 'block' : 'none';
+
+      const coinc = buscarCoincidenciaAfiliado(texto);
+      if (hiddenCuil) {
+        hiddenCuil.value = coinc ? String(coinc.CUIL || '').trim() : '';
+      }
+
+      renderizarOpcionesTuCuil(coinc ? '' : texto);
+      const dd = document.getElementById('tuCuilComboDropdown');
+      if (dd) dd.classList.add('open');
+    }
+
+    function renderizarOpcionesTuCuil(filtroTexto) {
+      const dd = document.getElementById('tuCuilComboDropdown');
+      if (!dd) return;
+      const q = String(filtroTexto || '').trim().toLowerCase();
+
+      const coincidencias = listaAfiliados.filter(function(af) {
+        const cuil = String(af.CUIL || '').toLowerCase();
+        const nom = String(af['APELLIDO Y NOMBRE'] || '').toLowerCase();
+        const etq = formatearEtiquetaAfiliado(af).toLowerCase();
+        return !q || cuil.indexOf(q) !== -1 || nom.indexOf(q) !== -1 || etq.indexOf(q) !== -1;
+      });
+
+      if (coincidencias.length === 0) {
+        dd.innerHTML = '<div class="combo-empty">No se encontraron afiliados con "' + filtroTexto + '"</div>';
+        return;
+      }
+
+      dd.innerHTML = coincidencias.slice(0, 120).map(function(af) {
+        const cuilClean = String(af.CUIL || '').trim();
+        const nomClean = String(af['APELLIDO Y NOMBRE'] || '').trim();
+        const cuilEsc = cuilClean.replace(/'/g, "\\'");
+        const nomEsc = nomClean.replace(/'/g, "\\'");
+        return '<div class="combo-item" onclick="seleccionarTuCuilCombo(\'' + cuilEsc + '\', \'' + nomEsc + '\')">' +
+          '<b>' + cuilClean + '</b>' + (nomClean ? ' - ' + nomClean : '') +
+        '</div>';
+      }).join('');
+    }
+
+    function seleccionarTuCuilCombo(cuil, nombre) {
+      const hiddenCuil = document.getElementById('tu_cuil');
+      const inp = document.getElementById('tu_cuil_busqueda');
+      const btnClear = document.getElementById('btnLimpiarTuCuil');
+
+      if (hiddenCuil) hiddenCuil.value = cuil;
+      if (inp) inp.value = nombre ? (cuil + ' - ' + nombre) : cuil;
+      if (btnClear) btnClear.style.display = 'block';
+      cerrarComboTuCuil();
+    }
+
+    function limpiarTuCuilSeleccionado() {
+      const hiddenCuil = document.getElementById('tu_cuil');
+      const inp = document.getElementById('tu_cuil_busqueda');
+      const btnClear = document.getElementById('btnLimpiarTuCuil');
+
+      if (hiddenCuil) hiddenCuil.value = '';
+      if (inp) inp.value = '';
+      if (btnClear) btnClear.style.display = 'none';
+      abrirComboTuCuil();
+      if (inp) inp.focus();
+    }
+
+    function setValorTuCuilFormulario(cuil) {
+      const hiddenCuil = document.getElementById('tu_cuil');
+      const inp = document.getElementById('tu_cuil_busqueda');
+      const btnClear = document.getElementById('btnLimpiarTuCuil');
+      const limpio = String(cuil || '').trim();
+
+      if (!limpio) {
+        if (hiddenCuil) hiddenCuil.value = '';
+        if (inp) inp.value = '';
+        if (btnClear) btnClear.style.display = 'none';
+        return;
+      }
+
+      const encontrada = listaAfiliados.find(function(af) {
+        return String(af.CUIL || '').trim() === limpio;
+      });
+
+      if (hiddenCuil) hiddenCuil.value = limpio;
+      if (inp) {
+        inp.value = encontrada ? formatearEtiquetaAfiliado(encontrada) : limpio;
+      }
+      if (btnClear) btnClear.style.display = 'block';
     }
 
     /* ================= BUSCADOR AUTOCOMPLETABLE DE SIGLAS Y OBRA SOCIAL ANTERIOR ================= */
@@ -2410,7 +2580,6 @@
       document.getElementById('af_siglas_busqueda').focus();
     }
 
-    /* Combo OBRA SOCIAL ANTERIOR (enlazado a obras_sociales, visible solo en OPCION C/PROPIA) */
     function abrirComboOsAnterior() {
       const inp = document.getElementById('af_os_anterior_busqueda');
       const coinc = buscarCoincidenciaOS(inp.value);
@@ -2510,7 +2679,7 @@
 
     function obtenerObraSocialAnterior(af) {
       if (!af) return '';
-      return af['OBRA SOCIAL ANTERIOR'] || af['OBRA SOCIAL ANTERIOR'] || '';
+      return af['OBRA SOCIAL ANTERIOR'] || '';
     }
 
     function obtenerFechaEleccion(af) {
@@ -2772,6 +2941,7 @@
       if (!el) return;
       el.textContent = mensaje;
       el.className = 'alert-banner ' + tipo;
+      el.style.display = 'block';
       setTimeout(function() { el.style.display = 'none'; }, 7000);
     }
 
@@ -2896,17 +3066,6 @@
           return s ? '<option value="' + s + '">' + (o.nombre || '') + '</option>' : '';
         }).join('');
       }
-
-      const selCuil = document.getElementById('tu_cuil');
-      if (selCuil) {
-        selCuil.innerHTML = '<option value="">-- Seleccionar Afiliado por CUIL --</option>';
-        listaAfiliados.forEach(function(af) {
-          const opt = document.createElement('option');
-          opt.value = af.CUIL;
-          opt.textContent = af.CUIL + ' - ' + (af['APELLIDO Y NOMBRE'] || '');
-          selCuil.appendChild(opt);
-        });
-      }
     }
 
     /* ================= SINCRONIZACIÓN AUTOMÁTICA A SONDEOS ================= */
@@ -3018,8 +3177,6 @@
         if (resAf.error) throw resAf.error;
         listaAfiliados = resAf.data || [];
 
-        // Leer MOVIMIENTOS DIARIOS (donde se carga FECHA TURNO y HS TURNO al elegir TIPO MOVIMIENTO = CITADO)
-        // y combinar con TURNOS (tabla aparte donde se guarda la evaluación del turno)
         const resMovDiarios = await supabaseClient
           .from('MOVIMIENTOS DIARIOS')
           .select('*, afiliados(*)')
@@ -3093,8 +3250,8 @@
         filtrarAgendaTurnos();
       } catch (err) {
         setEstadoConexion('error', 'Error RLS / Red');
-        document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
-        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los registros: ' + (err.message || err) + '</td></tr>';
+        document.getElementById('tbodyTurnos').innerHTML = '<tr><td colspan="15" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los datos: ' + (err.message || err) + '</td></tr>';
+        document.getElementById('tbodyAfiliados').innerHTML = '<tr><td colspan="16" style="text-align:center; padding:24px; color:#b91c1c;">No se pudieron leer los registros: ' + (err.message || err) + '</td></tr>';
         mostrarAlerta('Error Supabase: ' + (err.message || err), 'error');
       }
     }
@@ -3131,7 +3288,7 @@
       const tbody = document.getElementById('tbodyTurnos');
 
       if (filtrados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="14" style="text-align:center; padding:24px; color:#64748b;">No se encontraron turnos registrados. Haz clic en "Agregar ›" para cargar uno.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:24px; color:#64748b;">No se encontraron turnos registrados. Haz clic en "Agregar ›" para cargar uno.</td></tr>';
         return;
       }
 
@@ -3400,6 +3557,8 @@
       document.getElementById('drawerClave').classList.remove('open');
       document.getElementById('drawerEvaluacionTurno').classList.remove('open');
       cerrarComboSiglas();
+      cerrarComboOsAnterior();
+      cerrarComboTuCuil();
     }
 
     function abrirDrawerAfiliado() {
@@ -3554,9 +3713,7 @@
       document.getElementById('tu_hora').value = sello.hora + '-03';
       const opDef = obtenerUsuarioCodigo();
       if (opDef) setSelectValor('tu_operador', opDef);
-      if (cuilPreseleccionado) {
-        document.getElementById('tu_cuil').value = cuilPreseleccionado;
-      }
+      setValorTuCuilFormulario(cuilPreseleccionado || '');
       actualizarCamposCitado();
       document.getElementById('drawerTurno').classList.add('open');
     }
@@ -3572,7 +3729,6 @@
       document.getElementById('tu_fecha').value = t.FECHA || sello.fecha;
       document.getElementById('tu_hora').value = t.HORA || (sello.hora + '-03');
       setSelectValor('tu_estado', t['TIPO MOVIMIENTO'] || t.ESTADO);
-      document.getElementById('tu_operador');
       setSelectValor('tu_operador', t.OPERADOR);
       document.getElementById('tu_observaciones').value = t.OBSERVACIONES || '';
       document.getElementById('tu_fecha_turno').value = t['FECHA TURNO'] || t.FECHA_TURNO || '';
@@ -3761,12 +3917,22 @@
       e.preventDefault();
       if (!supabaseClient || !usuarioActual) return;
 
+      const inpTuCuil = document.getElementById('tu_cuil_busqueda');
+      const coincCuil = buscarCoincidenciaAfiliado(inpTuCuil ? inpTuCuil.value : '');
+      const cuilFinal = coincCuil
+        ? String(coincCuil.CUIL || '').trim()
+        : document.getElementById('tu_cuil').value.trim();
+
+      if (!cuilFinal) {
+        mostrarAlerta('Seleccioná o ingresá un CUIL válido de afiliado.', 'error');
+        return;
+      }
+
       const idTurno = document.getElementById('tu_id').value;
       const registroPrevio = idTurno
         ? listaTurnos.find(function(item) { return String(item.id) === String(idTurno); })
         : null;
 
-      // La FECHA y HORA del sistema quedan fijas una vez guardadas y no se permiten modificar
       let fechaFinal = '';
       let horaFinal = '';
       if (registroPrevio && registroPrevio.FECHA && registroPrevio.HORA) {
@@ -3794,7 +3960,7 @@
       }
 
       const payload = {
-        'CUIL': document.getElementById('tu_cuil').value.trim(),
+        'CUIL': cuilFinal,
         'FECHA': fechaFinal,
         'HORA': horaFinal,
         'TIPO MOVIMIENTO': tipoMov || null,
@@ -3808,7 +3974,6 @@
         ? await supabaseClient.from('MOVIMIENTOS DIARIOS').update(payload).eq('id', idTurno)
         : await supabaseClient.from('MOVIMIENTOS DIARIOS').insert([payload]);
 
-      // Si la base aún no tiene columnas FECHA TURNO / HORA TURNO, reintenta guardando en OBSERVACIONES sin perder los datos
       let resultadoFinal = res;
       if (res.error && esCitado && /column|FECHA TURNO|HS TURNO|HORA TURNO/i.test(res.error.message || '')) {
         const payloadSinColsTurno = Object.assign({}, payload);
@@ -3848,16 +4013,6 @@
       }
     }
 
-    const ESTADOS_TURNO_VALIDOS = [
-      'ASISTIO',
-      'INTRANET',
-      'NO ASISTIO',
-      'NO REALIZO FILIATORIO',
-      'SIN DOCUMENTACION',
-      'INCONSISTENTE',
-      'MULTIPLE COBERTURA'
-    ];
-
     async function upsertTurnoDesdeMovimiento(datosBase, overridesTurno) {
       if (!supabaseClient || !datosBase || !datosBase.CUIL) return { error: null };
       const cuil = String(datosBase.CUIL).trim();
@@ -3896,12 +4051,10 @@
         'OBSERVACIONES': obsFinal
       };
 
-      // Intentar upsert usando CUIL como clave única
       let res = await supabaseClient
         .from('TURNOS')
         .upsert([payloadTurno], { onConflict: 'CUIL' });
 
-      // Si CUIL no tiene restricción UNIQUE en TURNOS, actualizar por CUIL o insertar si no existe
       if (res.error) {
         const resUpd = await supabaseClient
           .from('TURNOS')
@@ -3918,7 +4071,6 @@
         }
       }
 
-      // Si faltan columnas en TURNOS, reintentar con columnas base
       if (res.error && /column|FECHA TURNO|HS TURNO|ESTADO TURNO|TIPO MOVIMIENTO/i.test(res.error.message || '')) {
         const payloadReducido = {
           'CUIL': cuil,
@@ -4040,26 +4192,24 @@
 
       let res = await upsertTurnoDesdeMovimiento(t, payload);
 
-      if (res.error) {
-        if (t.id != null) {
+      if (res.error && t.id != null) {
+        res = await supabaseClient
+          .from('MOVIMIENTOS DIARIOS')
+          .update(payload)
+          .eq('id', t.id);
+
+        if (res.error && /column|ESTADO TURNO|FECHA TURNO|HS TURNO/i.test(res.error.message || '')) {
+          const obsConEstado = obsBase
+            ? (obsBase + (estadoTurno ? ' [ESTADO TURNO: ' + estadoTurno + ']' : ''))
+            : (estadoTurno ? '[ESTADO TURNO: ' + estadoTurno + ']' : null);
+          const payloadFallback = {
+            'OPERADOR': ope,
+            'OBSERVACIONES': obsConEstado
+          };
           res = await supabaseClient
             .from('MOVIMIENTOS DIARIOS')
-            .update(payload)
+            .update(payloadFallback)
             .eq('id', t.id);
-
-          if (res.error && /column|ESTADO TURNO|FECHA TURNO|HS TURNO/i.test(res.error.message || '')) {
-            const obsConEstado = obsBase
-              ? (obsBase + (estadoTurno ? ' [ESTADO TURNO: ' + estadoTurno + ']' : ''))
-              : (estadoTurno ? '[ESTADO TURNO: ' + estadoTurno + ']' : null);
-            const payloadFallback = {
-              'OPERADOR': ope,
-              'OBSERVACIONES': obsConEstado
-            };
-            res = await supabaseClient
-              .from('MOVIMIENTOS DIARIOS')
-              .update(payloadFallback)
-              .eq('id', t.id);
-          }
         }
       }
 
