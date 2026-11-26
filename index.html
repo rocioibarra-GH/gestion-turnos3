@@ -2510,7 +2510,7 @@
 
     function obtenerObraSocialAnterior(af) {
       if (!af) return '';
-      return af['OBRA SOCIAL ANTEROR'] || af['OBRA SOCIAL ANTERIOR'] || '';
+      return af['OBRA SOCIAL ANTERIOR'] || af['OBRA SOCIAL ANTERIOR'] || '';
     }
 
     function obtenerFechaEleccion(af) {
@@ -3619,7 +3619,7 @@
       if (reg) payload['REGIMEN'] = reg;
       if (ges) payload['TIPO DE GESTION'] = ges;
       payload['SIGLAS'] = sig || null;
-      payload['OBRA SOCIAL ANTEROR'] = esOpcionPropia ? (osAnt || null) : null;
+      payload['OBRA SOCIAL ANTERIOR'] = esOpcionPropia ? (osAnt || null) : null;
       payload['FECHA DE ELECCION'] = fecElec;
       if (loc) payload['LOCALIDAD'] = loc;
       if (med) payload['MEDIO DE RECEPCION'] = med;
